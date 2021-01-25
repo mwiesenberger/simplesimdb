@@ -1,1 +1,1 @@
-import database
+from .database import Manager
