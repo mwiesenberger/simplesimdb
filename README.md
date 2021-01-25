@@ -6,6 +6,68 @@ A python module for creation and management of simple simulation data
  create, search and select entries based on given python dictionaries
  that can be converted to json.
 
+[![LICENSE : MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## Installation
+Use the package manager [pip](https://pip.pypa.io/en/stable/) to install simplesimdb.
+
+```bash
+pip install foobar
+```
+
+If you want to develop the module then the editable flag (which then
+will import the current state of the module)
+
+```bash
+cd path/to/simplesimdb
+pip install -e . # editable installation of the module
+pytest . # run the unittests
+```
+
+## Usage
+
+```python
+import json
+import simplesimdb
+import yaml
+
+db = simplesimdb.Manager( directory = 'ds_data',
+    filetype='yaml',
+    executable='./execute.sh')
+
+inputfile = {
+        "n": 3,
+        "Nx" : 20,
+        "Ny" : 20,
+        "Nz" : 20,
+        "mx" : 10,
+        "my" : 10
+}
+
+outfile = db.create( inputfile) # create the simulation data using inputfile as input
+with open( outfile) as f:
+    output = yaml.full_load(f)
+
+    print (json.dumps(output, indent=4))
+    f.close()
+
+db.delete_all() # delete all data in the directory and the directory itself
+```
+where execute.sh is a bash script that takes in.json as input and creates the file
+out.yaml
+```bash
+#!/bin/bash
+
+: ${FELTOR_PATH:="../feltor"}
+
+#echo "Compiling the source code ... "
+#ake $FELTOR_PATH/src/lamb_dipole/Makefile
+#echo "... Done"
+
+#echo "$FELTOR_PATH/inc/geometries/ds_t"
+cat $1 | jq '.n, .Nx, .Ny, .Nz, .mx, .my' | $FELTOR_PATH/inc/geometries/ds_t > $2
+```
+
 On the other hand
 ### Usage
  Use this module if
@@ -50,7 +112,3 @@ On the other hand
  - maybe use the simple-slurm package to generate slurm scripts
 
 
-# Some tips
-
- - pip install -e . # editable installation of the package
- - in ./tests run pytest test_simplesimdb.py to execute unit tests
