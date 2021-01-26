@@ -219,3 +219,14 @@ class Manager :
             os.rmdir( self.__directory)
         except OSError as e:
             pass # if the directory is non-empty nothing happens
+
+#### Idea on submit file creation
+# - maybe use the simple-slurm package to generate slurm scripts
+
+#### Ideas on a file view class
+# - We can have a separate class managing a view of (input.json, outfile) pairs
+#   without creating files but just managing the inputs
+# - problem is that inputfiles are seldom separately stored but we would rather
+#   need a view of netcdf files where we can assume the input is stored inside
+# - no functionality to create or delete files
+# - add single files or whole folders (assuming json and nc file has the name)
