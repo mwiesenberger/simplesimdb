@@ -153,7 +153,7 @@ class Manager :
         The purpose here is to give the user and iterable object to search
         or tabularize the content of outputfiles
         Returns:
-        (list of dict) : [ {"id": id, "inputfile":jsonfile,
+        list of dict : [ {"id": id, "inputfile":jsonfile,
             "outputfile" : outfile}]
         """
 
@@ -182,7 +182,7 @@ class Manager :
         python methods.
 
         Returns:
-        (list of dict) : [ { ...}, {...},...] where ... represents the actual
+        list of dict : [ { ...}, {...},...] where ... represents the actual
             content of the inputfiles
         """
         files = self.files()
@@ -213,12 +213,22 @@ class Manager :
         return hashed
 
     def jsonfile( self, js) :
-        """ File path to json file from the input """
+        """ File path to json file from the input
+
+        Does not check if the file actually exists
+        Returns:
+        path: the file path of the input file
+        """
         hashid = self.__hashinput(js)
         return os.path.join(self.__directory, hashid+'.json')
 
     def outfile( self, js) :
-        """ File path to output file from the input """
+        """ File path to output file from the input
+
+        Does not check if the file actually exists
+        Returns:
+        path: the file path of the output file
+        """
         hashid = self.__hashinput(js)
         if "json" == self.__filetype :
             return os.path.join( self.__directory, hashid+'_out.json')
