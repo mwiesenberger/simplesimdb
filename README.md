@@ -12,8 +12,9 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install simples
 pip install simplesimdb
 ```
 
-If you want to develop the module, then use the editable flag (which then
-will import the current state of the module)
+If you want to develop the module or just install the package directly from the
+github repository then clone it and then use the editable flag (which then
+will install your local copy of the module)
 
 ```bash
 cd path/to/simplesimdb
@@ -60,7 +61,8 @@ with open( outfile) as f:
     output = yaml.full_load(f)
     print (json.dumps(output, indent=4))
 
-content = db.table() # a dictionary of all existing runs in the directory
+content = db.table() # a list of dictionaries of all existing input in the directory
+file_list = db.files() # a list of dictionaries containing "id", "inputfile" and "outputfile" entries.
 outfile = db.select( inputfile) # select an existing simulation
 
 db.delete_all() # delete all generated data in directory and the directory itself if empty
@@ -114,6 +116,8 @@ cat $1 | jq '.n, .Nx, .Ny, .Nz, .mx, .my' | $FELTOR_PATH/inc/geometries/ds_t > $
  - The input.json file can be viewed as the metadata of a simulation and we
    assume that it can uniquely identify the output (something which is not true
    if you do not include for example parallelization details)
+ - Not optimized that is for (very) large input files (Mega or Giga bytes say) it
+   is probably slow
 
 ### Contributions
 Contributions are welcome.

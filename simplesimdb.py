@@ -86,16 +86,20 @@ class Manager :
         if the executable returns a non-zero exit code
 
         Parameters:
-        js (dict): the complete input file to the simulation
-                   see also hashinput
+        js (dict): the complete input file as a python dictionary. All keys
+        must be strings such that js can be converted to JSON.
+
+        Warning:  in order to generate a unique identifier
+        js needs to be normalized in the sense that the datatype must match
+        the required datatype documented (e.g. 10 in a field requiring float
+        is interpreted as an integer and thus produces a different hash)
 
         Returns:
         string: filename of new entry if it did not exist before
                 existing filename else
 
-       """
-        hashed = self.hashinput(js)
-        ncfile = self.outfile( hashed)
+        """
+        ncfile = self.outfile( js)
         exists = os.path.isfile( ncfile)
         if exists:
             return ncfile
@@ -103,17 +107,17 @@ class Manager :
             print( "Running simulation ... ")
             #First write the json file into the database
             # so that the program can read it as input
-            with open( self.jsonfile(hashed), 'w') as f:
+            with open( self.jsonfile(js), 'w') as f:
                 inputstring = json.dumps( js, sort_keys=True, ensure_ascii=True)
                 f.write( inputstring)
-            #Run the code to create netcdf file
+            #Run the code to create output file
             try :
-                subprocess.run( [self.__executable, self.jsonfile(hashed), ncfile],
+                subprocess.run( [self.__executable, self.jsonfile(js), ncfile],
                         check=True, capture_output=True)
             except subprocess.CalledProcessError as e:
                 #clean up entry and escalate exception
                 os.remove( ncfile)
-                os.remove( self.jsonfile(hashed))
+                os.remove( self.jsonfile(js))
                 raise e
             print( " ... Done")
 
@@ -125,46 +129,71 @@ class Manager :
         This functiont raises a ValueError exception if the file does not exist
         (and thus can be used as an existence check)
         Parameters:
-        js (dict) : The complete input file to the simulation
-                    see also hashinput
+        js (dict): the complete input file as a python dictionary. All keys
+        must be strings such that js can be converted to JSON.
+
+        Warning:  in order to generate a unique identifier
+        js needs to be normalized in the sense that the datatype must match
+        the required datatype documented (e.g. 10 in a field requiring float
+        is interpreted as an integer and thus produces a different hash)
 
         Returns:
         string: filename of existing file
         """
-        hashed = self.hashinput(js)
-        ncfile = self.outfile( hashed)
+        ncfile = self.outfile( js)
         exists = os.path.isfile( ncfile)
         if not exists:
             raise ValueError( 'Entry does not exist')
         else :
             return ncfile
 
-    def table(self):
-        """ Return all exisiting (input)-data in a python dict
+    def files(self):
+        """ Return a list of ids and files existing in directory
 
-        Use json.dumps(table(), indent=4) to pretty print
-        Note that this dictionary is searchable/ iteratable with standard
-        python methods. This table will include both data created by this
-        instance of the class as well as previous instances of the class
-        working on the same directory
-
+        The purpose here is to give the user and iterable object to search
+        or tabularize the content of outputfiles
         Returns:
-        dict: {id : inputfile}
+        (list of dict) : [ {"id": id, "inputfile":jsonfile,
+            "outputfile" : outfile}]
         """
-        table = {}
+
+        table = []
         for filename in os.listdir(self.__directory) :
             if filename.endswith(".json") and not filename.endswith( "out.json") :
                 with open( os.path.join( self.__directory, filename), 'r') as f:
+                    #load all json files and check if they are named correctly
+                    # and have a corresponding output file
                     js = json.load( f)
-                    hashed = self.hashinput(js)
-                    ncfile = self.outfile( hashed)
+                    ncfile = self.outfile( js)
                     exists = os.path.isfile( ncfile)
+                    entry = {}
                     if exists : # only add key if the output actually exists
-                        table[os.path.splitext( os.path.split(filename)[1])[0]] = js
-                    # the key is the hash value
+                        entry["id"] = os.path.splitext( os.path.split(filename)[1])[0]
+                        entry["inputfile"] = self.jsonfile(js)
+                        entry["outputfile"] = ncfile
+                    table.append(entry)
         return table
 
-    def hashinput( self, js):
+    def table(self):
+        """ Return all exisiting (input)-data in a list of python dicts
+
+        Use json.dumps(table(), indent=4) to pretty print
+        Note that this list of dictionaries is searchable/ iteratable with standard
+        python methods.
+
+        Returns:
+        (list of dict) : [ { ...}, {...},...] where ... represents the actual
+            content of the inputfiles
+        """
+        files = self.files()
+        table=[]
+        for d in files :
+            with open( d["inputfile"]) as f :
+                js = json.load( f)
+                table.append( js)
+        return table
+
+    def __hashinput( self, js):
         """Hash the input dictionary
 
         Params:
@@ -183,24 +212,25 @@ class Manager :
         hashed = hashlib.sha1( inputstring.encode( 'utf-8') ).hexdigest()
         return hashed
 
-    def jsonfile( self, hashid) :
-        """ Create the file path to json file from the hash id """
+    def jsonfile( self, js) :
+        """ File path to json file from the input """
+        hashid = self.__hashinput(js)
         return os.path.join(self.__directory, hashid+'.json')
 
-    def outfile( self, hashid) :
-        """ Create the file path to netcdf file from the hash id """
+    def outfile( self, js) :
+        """ File path to output file from the input """
+        hashid = self.__hashinput(js)
         if "json" == self.__filetype :
             return os.path.join( self.__directory, hashid+'_out.json')
         return os.path.join(self.__directory, hashid+'.'+self.__filetype)
 
     def delete( self, js) :
         """ Delete an entry if it exists """
-        hashed = self.hashinput(js)
-        ncfile = self.outfile( hashed)
+        ncfile = self.outfile( js)
         exists = os.path.isfile( ncfile)
         if exists :
             os.remove( ncfile)
-            os.remove( self.jsonfile(hashed))
+            os.remove( self.jsonfile(js))
 
     def replace( self, js) :
         """ Force a re-simulation: delete(js) followed by create(js) """
@@ -209,12 +239,13 @@ class Manager :
 
 
     def delete_all (self) :
-        """ Delete all file pairs id'd by the table method
+        """ Delete all file pairs id'd by the files method
 
         and the directory itself (if empty) """
-        tab = self.table()
-        for key in tab :
-            self.delete( tab[key])
+        files = self.files()
+        for entry in files :
+            os.remove( entry["inputfile"])
+            os.remove( entry["outputfile"])
         try :
             os.rmdir( self.__directory)
         except OSError as e:

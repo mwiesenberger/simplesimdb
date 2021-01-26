@@ -17,7 +17,7 @@ def test_creation() :
     inputdata = {"Hello": "World"}
     m.create( inputdata)
     content = m.table( )
-    assert content == { m.hashinput( inputdata) : inputdata }
+    assert content == [inputdata]
     m.delete_all()
     assert not os.path.isdir( m.directory)
 
@@ -29,6 +29,6 @@ def test_selection () :
     m.create( inputdata2)
     data = m.select( inputdata )
     assert os.path.isfile( data)
-    assert data == m.outfile( m.hashinput( inputdata))
+    assert data == m.outfile( inputdata)
     m.delete_all()
     assert not os.path.isdir( m.directory)
