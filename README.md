@@ -71,7 +71,7 @@ where execute.sh is a bash script that takes hashid.json as input and creates th
 hashid.yaml
 Here is an example of how the exectuable can look like. We use a bash script
 to parse the json input into command line arguments to a Feltor code
-and redirecty its output into the yaml file.
+and redirect its output into the yaml file.
 ```bash
 #!/bin/bash
 
@@ -84,9 +84,10 @@ cat $1 | jq '.n, .Nx, .Ny, .Nz, .mx, .my' | $FELTOR_PATH/inc/geometries/ds_t > $
 
 ### Why not just use an existing database management software like SQL
  - Relational databases are notoriously unsuited for scientific simulations so
-   SQL is mostly not an option in the scientific community
+   SQL is mostly not an option in the scientific community (in python we would
+   use pandas anyway)
  - Search methods that DBMS offer are offered by python for dictionaries as
-   well (especially if they are converted to tables)
+   well (especially if they are converted to tables in pandas)
  - There is an additional overhead of setting up and running a databaser server
  - When doing a parameter study you do not deal with millions of entries but a
    only a few hundred at best so a DBMS might just be overkill
