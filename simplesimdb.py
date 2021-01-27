@@ -171,7 +171,7 @@ class Manager :
                         entry["id"] = os.path.splitext( os.path.split(filename)[1])[0]
                         entry["inputfile"] = self.jsonfile(js)
                         entry["outputfile"] = ncfile
-                    table.append(entry)
+                        table.append(entry)
         return table
 
     def table(self):
