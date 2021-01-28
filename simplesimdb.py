@@ -147,6 +147,19 @@ class Manager :
         else :
             return ncfile
 
+    def exists( self, js) :
+        """ Check for existence of data
+
+        Parameters:
+        js (dict): the complete input file as a python dictionary. All keys
+        must be strings such that js can be converted to JSON.
+
+        Returns:
+        bool: True if output data corresponding to js exists, False else
+        """
+        ncfile = self.outfile( js)
+        return os.path.isfile( ncfile)
+
     def files(self):
         """ Return a list of ids and files existing in directory
 
