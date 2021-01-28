@@ -193,7 +193,7 @@ class Manager :
                 table.append( js)
         return table
 
-    def __hashinput( self, js):
+    def hashinput( self, js):
         """Hash the input dictionary
 
         Params:
@@ -219,7 +219,7 @@ class Manager :
         Returns:
         path: the file path of the input file
         """
-        hashid = self.__hashinput(js)
+        hashid = self.hashinput(js)
         return os.path.join(self.__directory, hashid+'.json')
 
     def outfile( self, js) :
@@ -229,7 +229,7 @@ class Manager :
         Returns:
         path: the file path of the output file
         """
-        hashid = self.__hashinput(js)
+        hashid = self.hashinput(js)
         if "json" == self.__filetype :
             return os.path.join( self.__directory, hashid+'_out.json')
         return os.path.join(self.__directory, hashid+'.'+self.__filetype)
