@@ -6,17 +6,11 @@ Essentially, a very basic database manager that creates its own data.
 [![LICENSE : MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Installation
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install simplesimdb.
+We do not yet have an uploaded version on pypi.
+To install you have to clone the repository and then use the package manager [pip](https://pip.pypa.io/en/stable/).
 
 ```bash
-pip install simplesimdb
-```
-
-If you want to develop the module or just install the package directly from the
-github repository then clone it and then use the editable flag (which then
-will install your local copy of the module)
-
-```bash
+git clone https://github.com/mwiesenberger/simplesimdb
 cd path/to/simplesimdb
 pip install -e . # editable installation of the module
 pytest . # run the unittests
