@@ -116,7 +116,8 @@ class Manager :
                         check=True, capture_output=True)
             except subprocess.CalledProcessError as e:
                 #clean up entry and escalate exception
-                os.remove( ncfile)
+                if os.path.isfile( ncfile) :
+                    os.remove( ncfile)
                 os.remove( self.jsonfile(js))
                 raise e
             print( " ... Done")
