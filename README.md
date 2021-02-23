@@ -8,6 +8,7 @@ Essentially, a very basic database manager that creates its own data.
 ## Installation
 We do not yet have an uploaded version on pypi.
 To install you have to clone the repository and then use the package manager [pip](https://pip.pypa.io/en/stable/).
+> You need python3 to install this module
 
 ```bash
 git clone https://github.com/mwiesenberger/simplesimdb
