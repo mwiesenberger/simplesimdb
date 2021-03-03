@@ -26,12 +26,12 @@ class Manager :
         filetype (string) : file extension of the output files
         executable (string) : The executable that generates the data
 
-        This file will be called using subprocess.run([executable, id.json,
-        id.filetype],...) that is it must take 2 arguments - a json file as
-        input (do not change the input else the file is not recognized any
-        more) and one output file (that executable needs to generate)
-        (if your code does not take json as input you can for example parse
-        json in bash using jq)
+        This file will be called using subprocess.run([executable,
+        directory/hashid.json, directory/hashid.filetype],...) with 2 arguments
+        - a json file as input (do not change the input else the file is not
+        recognized any more) and one output file (that executable needs to
+        generate) (if your code does not take json as input you can for example
+        parse json in bash using jq)
         """
         self.directory = directory
         os.makedirs( self.__directory, exist_ok=True)
@@ -50,12 +50,12 @@ class Manager :
         """
         (string) : The executable that generates the data.
 
-        The create method calls subprocess.run([executable, id.json,
-        id.filetype],...) that is it must take 2 arguments - a json file as
-        input (do not change the input else the file is not recognized any
-        more) and one output file (that executable needs to generate)
-        (if your code does not take json as input you can for example parse
-        json in bash using jq)
+        The create method calls subprocess.run([executable,
+        directory/hashid.json, directory/hashid.filetype],...) that is it must
+        take 2 arguments - a json file as input (do not change the input else
+        the file is not recognized any more) and one output file (that
+        executable needs to generate) (if your code does not take json as input
+        you can for example parse json in bash using jq)
         """
         return self.__executable
 
