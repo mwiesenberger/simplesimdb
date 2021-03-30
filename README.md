@@ -30,6 +30,8 @@ Its tasks are
  - select existing output files from the data folder based on a given input
  - display all input parameters for which output data exists in the folder
 
+### A first example
+
 Here is an example of how to use the module
 
 ```python
@@ -62,11 +64,10 @@ outfile = db.select( inputfile) # select an existing simulation
 
 db.delete_all() # delete all generated data in directory and the directory itself if empty
 ```
-where execute.sh is a bash script that takes hashid.json as input and creates the file
-hashid.yaml
-Here is an example of how the exectuable can look like. We use a bash script
-to parse the json input into command line arguments to a Feltor code
-and redirect its output into the yaml file.
+where `execute.sh` is a bash script that takes `hashid.json` as input and creates the file
+`hashid.yaml`
+In this example `execute.sh` parses the json input into command line arguments to a Feltor code and redirect its output into the yaml file.
+
 ```bash
 #!/bin/bash
 
@@ -77,7 +78,69 @@ and redirect its output into the yaml file.
 cat $1 | jq '.n, .Nx, .Ny, .Nz, .mx, .my' | $FELTOR_PATH/inc/geometries/ds_t > $2
 ```
 
-### Why not just use an existing database management software like SQL
+### Running on a cluster
+
+In many cases simulations are too expensive to run on a local machine. In this case it is mandatory that simulations run on a cluster. The data could then be transfered back to  a local machine where the data exploration with for example a jupyter notebook takes place. With simplesimdb the recommended way of achieving this scenario is: 
+
+(i) a `generate_data.py` file on the cluster
+
+```python
+import json
+import simplesimdb as simplesim
+
+m = simplesim.Manager( directory='data', executable='./execute.sh', filetype='nc')
+
+inputfile = generate_input(  ... )
+m.create(inputfile)
+```
+
+(ii) the `execute.sh` script in this case has to submit the jobs to the job queue (here with slurm):
+
+```bash
+#!/bin/bash
+
+INFILE=$1
+
+FILE="${INFILE%.*}"
+HASHID=$(basename -- "$INFILE")
+HASHID="${HASHID%.*}"
+
+sbatch -o ${FILE}.out -e ${FILE}.err -J $HASHID  submit.sh $1 $2
+```
+
+(iii) the `submit.sh` script is a template job script for all simulations
+
+```bash
+#!/bin/bash
+
+#SBATCH -N 1 -n 1 --ntasks-per-node=1
+#SBATCH --gres=gpu:1
+#SBATCH --partition=m100_fua_prod
+#SBATCH --account=xxxxx_xxxxx
+#SBATCH --time=8:00:00
+
+echo 'Marconi 100 cluster with Tesla V100 GPUs'
+: ${FELTOR_PATH:="../feltor"}
+
+$FELTOR_PATH/src/reco2D/reconnection_hpc $1 $2
+```
+
+There are a few caveats to this workflow:
+
+- simplesimdb has no way of knowing when a simulation is pending, running, finished or produced an error. The execute.sh returns if the job is successfully submitted
+- in this example all jobs run on exactly the same hardware resources since all use the same job template submit script. 
+
+## Current limitations
+
+- Cannot manage simulations with more than one input file
+  (probably the easiest solution is to concatenate the two files)
+- Cannot manage simulations with more than one output file
+- Cannot manage existing simulation files that do not have names assigned by the module (create View)
+- Not optimized for (very) large input files: for Mega or Giga bytes say it
+  is probably slow
+
+## Why not just use an existing database management software like SQL
+
  - Relational databases are notoriously unsuited for scientific simulations so
    SQL is mostly not an option in the scientific community (in python we would
    use pandas anyway)
@@ -98,25 +161,10 @@ cat $1 | jq '.n, .Nx, .Ny, .Nz, .mx, .my' | $FELTOR_PATH/inc/geometries/ds_t > $
  - If json files are hidden by the database manager how do we use them as input
    to run an executable to generate the output file?
 
-### Current limitations of this module
- - Cannot manage restarted simulations i.e. sims, where one input file
-   generates a continuous series of netcdf files
- - Cannot manage simulations with more than one input file (probably the
-   easiest solution is to concatenate the two files)
- - Won't manage existing files that do not have names assigned by the class
-   (create View )
- - Won't manage several inputs - several outputs scenario ( in particular the
-   one where a simulation is restarted over and over)
- - Won't be able to submit and wait (unless you misuse it on a cluster and just
-   ignore the output file parameter)
- - The input.json file can be viewed as the metadata of a simulation and we
-   assume that it can uniquely identify the output (something which is not true
-   if you do not include for example parallelization details)
- - Not optimized that is for (very) large input files (Mega or Giga bytes say) it
-   is probably slow
+## Contributions
 
-### Contributions
 Contributions are welcome.
-### Authors
+## Authors
+
 Matthias Wiesenberger
 
