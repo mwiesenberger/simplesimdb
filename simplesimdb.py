@@ -169,6 +169,7 @@ class Manager :
         """ Select an output file based on its input parameters
 
         Raise a ValueError exception if the file does not exist
+        else it just returns self.outfile( js, n)
 
         Parameters:
         js (dict): the complete input file as a python dictionary. All keys
@@ -182,7 +183,7 @@ class Manager :
         is interpreted as an integer and thus produces a different hash)
 
         Return:
-        string: filename of existing file
+        string: self.outfile( js, n) if file exists
         """
         ncfile = self.outfile( js, n)
         exists = os.path.isfile( ncfile)
@@ -339,7 +340,10 @@ class Manager :
     def delete_all (self) :
         """ Delete all file pairs id'd by the files method
 
-        and the directory itself (if empty) """
+        and the directory itself (if empty)
+        ATTENTION: if you want to continue to use the object afterwards
+        remember to reset the directory: m.directory = '...'
+        """
         files = self.files()
         for entry in files :
             if entry["n"] == 0 :

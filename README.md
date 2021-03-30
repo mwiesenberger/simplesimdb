@@ -40,32 +40,32 @@ import simplesimdb
 import yaml
 
 db = simplesimdb.Manager(
-    directory = 'ds_data',
-    filetype='yaml',
-    executable='./execute.sh')
+    directory = 'ds_data', # where to store the generated data
+    filetype='yaml', # file-ending of the output files
+    executable='./execute.sh' # the program to execute to generate data
+) 
 
-inputfile = {
-    "n": 3,
-    "Nx" : 20,
-    "Ny" : 20,
-    "Nz" : 20,
-    "mx" : 10,
-    "my" : 10
-}
+# Let us generate an inputfile for our simulation
+inputfile = { "n": 3, "Nx" : 20, "Ny" : 20, "Nz" : 20,
+              "mx" : 10, "my" : 10 }
 
-outfile = db.create( inputfile) # call executable to create the simulation data using inputfile as input
+# run a simulation with the specified input
+outfile = db.create( inputfile)
+# now open and read the created output
 with open( outfile) as f:
     output = yaml.full_load(f)
     print (json.dumps(output, indent=4))
 
-content = db.table() # a list of dictionaries of all existing input in the directory
-file_list = db.files() # a list of dictionaries containing "id", "inputfile" and "outputfile" entries.
-outfile = db.select( inputfile) # select an existing simulation
-
-db.delete_all() # delete all generated data in directory and the directory itself if empty
+# list all existing inputfiles in the directory
+content = db.table() 
+# the list of inputfiles is searchable:
+found = list( filter( lambda entry : ( entry["mx"] == 10), content) )
+# select a simulation if it exists
+outfile = db.select( found[0]) 
+# delete all generated data in directory and the directory itself
+db.delete_all() 
 ```
-where `execute.sh` is a bash script that takes `hashid.json` as input and creates the file
-`hashid.yaml`
+where `execute.sh` is an executable that takes `directory/hashid.json` as input and creates the file `directory/hashid.yaml`
 In this example `execute.sh` parses the json input into command line arguments to a Feltor code and redirect its output into the yaml file.
 
 ```bash
@@ -129,6 +129,60 @@ There are a few caveats to this workflow:
 
 - simplesimdb has no way of knowing when a simulation is pending, running, finished or produced an error. The execute.sh returns if the job is successfully submitted
 - in this example all jobs run on exactly the same hardware resources since all use the same job template submit script. 
+
+### Restarting simulations
+
+Sometimes simulation outputs cannot be created in a single run (due to file size, time limitations, etc.) but rather a simulation is partitioned (in time) into a sequential number of separate smaller runs. Correspondingly each run sequentially generates and stores only a partition of the entire output file. Each run restarts the simulation with the result of the previous run. The Manager solves this problem via the optional
+simulation number n in its member functions. For n>0 create will pass the result of the previous simulation as a third input to the executable
+
+See the following example to see how to create and subsequently iterate through restarted simulations
+
+```python
+import json
+import simplesimdb as simplesim
+
+m = simplesim.Manager( directory='data', executable='./execute.sh', filetype='txt')
+# delete content of previous simulation run
+m.delete_all()
+# !!! after delete_all() we must reset the directory: !!!
+m.directory = 'data'
+ 
+inputfile1 = { "Hello" : "World"}
+inputfile2 = { "Hello" : "User"}
+# generate 3 data files for each input:
+for n in range( 0,3) :
+    m.create( inputfile1, n)
+    m.create( inputfile2, n)
+
+# Now search for a specific input file in the content
+content = m.table()
+found = list( filter( lambda entry : ( entry["Hello"] == "User"), content) )
+print( found[0])
+# Count all corresponding simulations
+number = m.count( found[0])
+print( "Number of simulations found:", number)
+# and finally loop over and read each of the found simulations
+for n in range( 0, number):
+    f = open( m.outfile( found[0], n), "r")
+    print ( "Contents of file", n )
+    print ( f.read())
+```
+
+The `execute.sh` script in our example does not do much
+
+```bash
+#!/bin/bash
+
+if [ $# -eq 2 ] # note the whitespaces
+then
+    # do something for first simulation
+    echo $1 $2 > $2
+else
+    # do something else for restart
+    echo "!!!!!RESTART!!!!!" > $2
+    cat $3 >> $2
+fi
+```
 
 ## Current limitations
 
