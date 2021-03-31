@@ -5,7 +5,7 @@ import os.path # to check for files
 import subprocess # to run the create program
 
 class Manager :
-    """ Simulation database manager
+    """ Lightweight Simulation Database Manager
 
     Create, access and display simulation data of a given code as pairs
     (inputfile.json : outputfile [, restarted_01, restarted_02, ...]),
@@ -105,7 +105,7 @@ class Manager :
         self.__filetype = filetype
 
     def create( self, js, n = 0):
-        """Run a simulation if it does not exist yet
+        """Run a simulation if outfile does not exist yet
 
         Use subprocess.run( [executable, in.json, out])
         raise a subprocess.CalledProcessError error
