@@ -2,8 +2,7 @@ import pytest
 import simplesimdb as sim
 import os.path
 
-# Run with python --capture==tee-sys . to see stdout output
-
+# Run with pytest --capture=tee-sys . to see stdout output
 
 def test_construction_and_destruction():
     print ( "TEST")
