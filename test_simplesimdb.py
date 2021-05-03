@@ -53,3 +53,16 @@ def test_restart () :
     assert( len(files) == 17)
     m.delete_all()
     assert not os.path.isdir( m.directory)
+
+def test_repeater() :
+    print( "TEST REPEATER")
+    m = sim.Repeater( "touch", "temp.json", "temp.nc")
+    inputdata =  {"Hello": "World"}
+    m.run( inputdata, error="display", stdout="display")
+    assert os.path.isfile( "temp.json")
+    assert os.path.isfile( "temp.nc")
+    m.executable="echo"
+    m.run( inputdata, error="display", stdout="display")
+    m.clean()
+    assert not os.path.isfile( "temp.json")
+    assert not os.path.isfile( "temp.nc")

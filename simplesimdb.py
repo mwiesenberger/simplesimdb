@@ -4,6 +4,82 @@ import hashlib # for the hashing
 import os.path # to check for files
 import subprocess # to run the create program
 
+
+class Repeater :
+    """ Manage a single file pair (inputfile, outputfile)
+
+    The purpose of this class is to provide a simple tool when you do not want
+    to actually store simulation data on disc (except temporarily). It is
+    sometimes more efficient to simply write the data into a single file
+    and then reuse/overwrite it in all subsequent simulations.
+
+    """
+    def __init__ (self, executable="./execute.sh", inputfile="temp.json", outputfile="temp.nc"):
+        """ Set the executable and files to use in the run method"""
+        self.executable = executable
+        self.inputfile = inputfile
+        self.outputfile = outputfile
+    @property
+    def executable(self):
+        return self.__executable
+    @property
+    def inputfile(self):
+        return self.__inputfile
+    @property
+    def outputfile(self):
+        return self.__outputfile
+    @executable.setter
+    def executable(self, executable) :
+        self.__executable = executable
+    @inputfile.setter
+    def inputfile(self, inputfile) :
+        self.__inputfile = inputfile
+    @outputfile.setter
+    def outputfile(self, outputfile) :
+        self.__outputfile = outputfile
+
+    def run( self, js, error="display", stdout="ignore"):
+        """ Write inputfile and then run a simulation
+
+        error (string) :
+            "raise"
+            raise a subprocess.CalledProcessError error
+            if the executable returns a non-zero exit code
+            "display"
+            print(stderr ) then return
+            "ignore"
+            return
+        stdout (string) :
+            "ignore"
+            throw away std output
+            "display"
+            print( process.stdout)
+            return
+        """
+        with open( self.inputfile, 'w') as f:
+            inputstring = json.dump( js, f,
+                    sort_keys=True, ensure_ascii=True, indent=4)
+        try :
+            process = subprocess.run( [self.__executable, self.__inputfile,
+                    self.__outputfile],
+                    check=True, capture_output=True)
+            if stdout == "display" :
+                print( process.stdout)
+        except subprocess.CalledProcessError as e:
+            if error == "display" :
+                print( e.stderr)
+            elif error == "raise" :
+                raise e
+    def clean(self) :
+        """ Remove inputfile and outputfile"""
+        if os.path.isfile( self.__inputfile) :
+            os.remove( self.__inputfile)
+        if os.path.isfile( self.__outputfile) :
+            os.remove( self.__outputfile)
+
+
+
+
 class Manager :
     """ Lightweight Simulation Database Manager
 
@@ -104,12 +180,13 @@ class Manager :
     def filetype(self, filetype) :
         self.__filetype = filetype
 
-    def create( self, js, n = 0):
+    def create( self, js, n = 0, error = "raise", stdout="ignore"):
         """Run a simulation if outfile does not exist yet
 
+        Create (write) the in.json file to disc
         Use subprocess.run( [executable, in.json, out])
-        raise a subprocess.CalledProcessError error
-        if the executable returns a non-zero exit code
+        If the executable returns a non-zero exit code the inputfile (if n!= 0)
+        and outputfile are removed
 
         Parameters:
         js (dict): the complete input file as a python dictionary. All keys
@@ -118,8 +195,24 @@ class Manager :
         beginning with 0.  If n>0, we will use the previous simulation as a
         third argument subprocess.run( [executable, in.json, out_n, out_(n-1)])
         This can be used to restart simulations
+        error (string) :
+            "raise"
+            raise a subprocess.CalledProcessError error
+            if the executable returns a non-zero exit code
+            "display"
+            print(stderr ) then return
+            "ignore"
+            return
+        stdout (string) :
+            "ignore"
+            throw away std output
+            "display"
+            print( process.stdout)
+            return
 
-        WARNING:  in order to generate a unique identifier
+
+
+        ATTENTION:  in order to generate a unique identifier
         js needs to be normalized in the sense that the datatype must match
         the required datatype documented (e.g. don't write 10 in a field
         requiring float but 10.0, otherwise it is interpreted as an integer and
@@ -145,25 +238,30 @@ class Manager :
             try :
                 # Check if the simulation is a restart
                 if n == 0 :
-                    subprocess.run( [self.__executable, self.jsonfile(js),
+                    process = subprocess.run( [self.__executable, self.jsonfile(js),
                         ncfile],
                         check=True, capture_output=True)
+                    if stdout == "display" :
+                        print( process.stdout)
                 else :
                     previous_ncfile = self.outfile( js, n-1)
-                    subprocess.run( [self.__executable, self.jsonfile(js),
+                    process = subprocess.run( [self.__executable, self.jsonfile(js),
                         ncfile, previous_ncfile],
                         check=True, capture_output=True)
+                    if stdout == "display" :
+                        print( process.stdout)
             except subprocess.CalledProcessError as e:
                 #clean up entry and escalate exception
                 if os.path.isfile( ncfile) :
                     os.remove( ncfile)
-                os.remove( self.jsonfile(js))
-                raise e
-            print( " ... Done")
+                if n == 0 : # only remove input if not restarted
+                    os.remove( self.jsonfile(js))
+                if error == "display" :
+                    print( e.stderr)
+                elif error == "raise" :
+                    raise e
 
             return ncfile
-
-
 
     def select( self, js, n = 0) :
         """ Select an output file based on its input parameters
@@ -329,10 +427,11 @@ class Manager :
         exists = os.path.isfile( ncfile)
         if exists :
             os.remove( ncfile)
-            os.remove( self.jsonfile(js))
+            if n == 0 :
+                os.remove( self.jsonfile(js))
 
     def replace( self, js, n = 0) :
-        """ Force a re-simulation: delete(js) followed by create(js) """
+        """ Force a re-simulation: delete(js, n) followed by create(js, n) """
         self.delete(js, n)
         return self.create(js, n)
 
@@ -353,9 +452,6 @@ class Manager :
             os.rmdir( self.__directory)
         except OSError as e:
             pass # if the directory is non-empty nothing happens
-
-#### Idea on submit file creation
-# - maybe use the simple-slurm package to generate slurm scripts
 
 #### Ideas on a file view class
 # - for projects that are not managed or created with simplesimdb

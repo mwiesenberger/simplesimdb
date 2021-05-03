@@ -14,6 +14,7 @@ To install you have to clone the repository and then use the package manager [pi
 git clone https://github.com/mwiesenberger/simplesimdb
 cd path/to/simplesimdb
 pip install -e . # editable installation of the module
+# ... if asked, cancel all password prompts ...
 pytest . # run the unittests
 ```
 
@@ -308,6 +309,89 @@ for n in range( 0, number):
 ```
 
 The result is the same as in the previous section
+
+### Diagnostics
+
+Sometimes, for very large simulations, we want to run post-processing diagnostics that is also written in another language. This post-processing takes the form of `./diag output.nc diag_output.nc` 
+
+In order to integrate well with our `Manger` class we suggest to keep simulation data and diagnostics data in separate folders (for example "data" and "diag"). Create a second Manager on the "diag" folder and make the `execute.sh` script (i) ignore the input and restart files and (ii) in the output file replace the "diag" folder with the original "data" folder and use that one as input:
+
+```bash
+### diag.sh ###
+#!/bin/bash
+
+: ${FELTOR_PATH:="../feltor"}
+# we change the diag folder to data (assuming these are the folder names in use)
+input=$(echo $2 | sed -e 's/diag/data')
+# ignore $1 (the input.json) and $3 (the restart file)
+$FELTOR_PATH/src/feltor/feltordiag $input $2
+```
+
+In python we can then create and search diagnostic files by input parameters and simulation number as usual:
+
+```python
+### diagnose.py ###
+import json
+import simplesimdb as simplesim
+
+data = simplesim.Manager( directory='data', filetype='nc')
+diag = simplesim.Manager( directory="diag", filetype="nc", executable="./diag.sh")
+content = data.table()
+found = list( filter( lambda entry : ( entry["Hello"] == "World"), content) )
+number = data.count( found[0])
+print( "Number of simulations found:", number)
+for n in range( 0, number):
+    # Simulation data
+    outfile = data.select( found[0], n)
+    # corresponding diagnostics
+    diagfile = diag.create( found[0], n)
+    f = open( diagfile, "r")
+    # ... do stuff
+```
+
+### Repeater
+
+Sometimes we do not want to store simulation data on disc and it is enough to simply store temporary files. This can for example happen when simulations run very quickly and data should be created "on demand". For such a case we have the `Repeater` class, which simply overwrites the input and output for each new simulation:
+
+```bash
+### geometry_diag.sh ###
+#!/bin/bash
+
+: ${FELTOR_PATH:="../feltor"}
+make -C $FELTOR_PATH/inc/geometries geometry_diag device=omp
+
+rm -f $2 # in case the file is opened elsewhere ...
+$FELTOR_PATH/inc/geometries/geometry_diag $1 $2
+```
+
+```python
+### calibrate.py ###
+
+import json
+import simplesimdb as simplesim
+
+rep = simplesim.Repeater( "./execute.sh", "temp.json", "temp.nc")
+inputdata={"Hello": "World"}
+rep.run( inputdata, error="display", stdout="ignore")
+# ... do something with "temp.nc"
+inputdata={"Hello": "User"}
+# Overwrite both "temp.json" and "temp.nc"
+rep.run( inputdata, error="display", stdout="ignore")
+# ... do something else with "temp.nc"
+rep.clean()
+```
+
+
+
+    # ... do stuff
+
+    # do something for first simulation
+​    cat $1 > $2
+else
+    # do something else for restart
+​    echo "!!!!!RESTART!!!!!"  > $2
+​    cat $3 >> $2
+fi
 
 ## Current limitations
 
