@@ -381,18 +381,6 @@ rep.run( inputdata, error="display", stdout="ignore")
 rep.clean()
 ```
 
-
-
-    # ... do stuff
-
-    # do something for first simulation
-​    cat $1 > $2
-else
-    # do something else for restart
-​    echo "!!!!!RESTART!!!!!"  > $2
-​    cat $3 >> $2
-fi
-
 ## Current limitations
 
 - Cannot manage simulations with more than one input file
