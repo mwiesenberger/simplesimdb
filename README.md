@@ -312,9 +312,9 @@ The result is the same as in the previous section
 
 ### Diagnostics
 
-Sometimes, for very large simulations, we want to run post-processing diagnostics that is also written in another language. This post-processing takes the form of `./diag output.nc diag_output.nc` 
+Sometimes, for very large simulations, we want to run post-processing diagnostics that is also written in another language. This post-processing takes the form of `./diag output.nc diag_output.nc`
 
-In order to integrate well with our `Manger` class we suggest to keep simulation data and diagnostics data in separate folders (for example "data" and "diag"). Create a second Manager on the "diag" folder and make the `execute.sh` script (i) ignore the input and restart files and (ii) in the output file replace the "diag" folder with the original "data" folder and use that one as input:
+In order to integrate well with our `Manager` class we suggest to keep simulation data and diagnostics data in separate folders (for example "data" and "diag"). Then, create a second Manager on the "diag" folder and make the `execute.sh` script (i) ignore the input and restart files and (ii) in the output file replace the "diag" folder with the original "data" folder and use that one as input:
 
 ```bash
 ### diag.sh ###
@@ -322,7 +322,7 @@ In order to integrate well with our `Manger` class we suggest to keep simulation
 
 : ${FELTOR_PATH:="../feltor"}
 # we change the diag folder to data (assuming these are the folder names in use)
-input=$(echo $2 | sed -e 's/diag/data')
+input=$(echo $2 | sed -e 's/diag/data/')
 # ignore $1 (the input.json) and $3 (the restart file)
 $FELTOR_PATH/src/feltor/feltordiag $input $2
 ```
@@ -379,6 +379,25 @@ inputdata={"Hello": "User"}
 rep.run( inputdata, error="display", stdout="ignore")
 # ... do something else with "temp.nc"
 rep.clean()
+```
+
+The trick to get a diagnostics to work is similar as above
+```python
+### short-diagnose.py ###
+
+import json
+import simplesimdb as simplesim
+
+# by naming it data and diag we get the diag.sh from above to work
+rep  = simplesim.Repeater( "./execute.sh", "data.json", "data.nc")
+diag = simplesim.Repeater( "./diag.sh", "diag.json", "diag.nc")
+inputdata={"Hello": "World"}
+rep.run( inputdata, error="display", stdout="ignore")
+# ... do something with "data.nc"
+diag.run( inputdata)
+# ... do something with "diag.nc"
+rep.clean()
+diag.clean()
 ```
 
 ## Current limitations
