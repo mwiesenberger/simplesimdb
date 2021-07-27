@@ -430,10 +430,10 @@ class Manager :
             if n == 0 :
                 os.remove( self.jsonfile(js))
 
-    def replace( self, js, n = 0) :
-        """ Force a re-simulation: delete(js, n) followed by create(js, n) """
+    def replace( self, js, n = 0, error = "raise", stdout="ignore"):
+        """ Force a re-simulation: delete(js, n) followed by create(js, n, error, stdout) """
         self.delete(js, n)
-        return self.create(js, n)
+        return self.create(js, n, error, stdout)
 
 
     def delete_all (self) :
