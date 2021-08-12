@@ -62,7 +62,7 @@ class Repeater :
         try :
             process = subprocess.run( [self.__executable, self.__inputfile,
                     self.__outputfile],
-                    check=True, capture_output=True)
+                    check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if stdout == "display" :
                 print( process.stdout)
         except subprocess.CalledProcessError as e:
@@ -240,14 +240,14 @@ class Manager :
                 if n == 0 :
                     process = subprocess.run( [self.__executable, self.jsonfile(js),
                         ncfile],
-                        check=True, capture_output=True)
+                        check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     if stdout == "display" :
                         print( process.stdout)
                 else :
                     previous_ncfile = self.outfile( js, n-1)
                     process = subprocess.run( [self.__executable, self.jsonfile(js),
                         ncfile, previous_ncfile],
-                        check=True, capture_output=True)
+                        check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     if stdout == "display" :
                         print( process.stdout)
             except subprocess.CalledProcessError as e:
