@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="simplesimdb",
-    version="0.1.0",
+    version="1.0.0",
     author="Matthias Wiesenberger",
     author_email="mattwi@fysik.dtu.dk",
     description="Create, access and manage simple simulation data",
@@ -18,8 +18,10 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-        "Topic :: Scientific simulations :: Libraries",
+        "Topic :: Software Development :: Libraries",
+        "Topic :: Scientific/Engineering",
         "Topic :: Utilities",
+        "Topic :: Database"
     ],
     python_requires='>=3.6',
     setup_requires=['pytest-runner'],
