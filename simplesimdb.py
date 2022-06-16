@@ -223,12 +223,14 @@ class Manager :
                 existing filename else
 
         """
+        hashid = self.hashinput(js)
         ncfile = self.outfile( js, n)
         exists = os.path.isfile( ncfile)
         if exists:
+            print( "Existing simulation " + hashid[0:6] + "..." + ncfile[-9:])
             return ncfile
         else :
-            print( "Running simulation ..." + ncfile[-12:])
+            print( "Running simulation " + hashid[0:6] + "..." + ncfile[-9:])
             #First write the json file into the database
             # so that the program can read it as input
             with open( self.jsonfile(js), 'w') as f:
