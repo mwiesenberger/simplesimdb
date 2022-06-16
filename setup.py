@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="simplesimdb",
-    version="1.0.1",
+    version="1.0.2",
     author="Matthias Wiesenberger",
     author_email="mattwi@fysik.dtu.dk",
     description="Create, access and manage simple simulation data",
