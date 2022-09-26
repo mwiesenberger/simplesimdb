@@ -57,7 +57,7 @@ class Repeater :
             return
         """
         with open( self.inputfile, 'w') as f:
-            inputstring = json.dump( js, f,
+            json.dump( js, f,
                     sort_keys=True, ensure_ascii=True, indent=4)
         try :
             process = subprocess.run( [self.__executable, self.__inputfile,
@@ -180,7 +180,7 @@ class Manager :
     def filetype(self, filetype) :
         self.__filetype = filetype
 
-    def create( self, js, n = 0, error = "raise", stdout="ignore"):
+    def create( self, js, n = 0, name = "", error = "raise", stdout="ignore"):
         """Run a simulation if outfile does not exist yet
 
         Create (write) the in.json file to disc
@@ -191,6 +191,9 @@ class Manager :
         Parameters:
         js (dict): the complete input file as a python dictionary. All keys
         must be strings such that js can be converted to JSON.
+        name (string) : A human readable name/id that is used in the
+        naming of all files associated with js. If empty, the default sha based
+        naming scheme will be used.
         n (integer) : (RESTART ADDON) the number of the simulation to run
         beginning with 0.  If n>0, we will use the previous simulation as a
         third argument subprocess.run( [executable, in.json, out_n, out_(n-1)])
@@ -224,6 +227,8 @@ class Manager :
 
         """
         hashid = self.hashinput(js)
+        if not name == "" :
+            self.register( js, name)
         ncfile = self.outfile( js, n)
         exists = os.path.isfile( ncfile)
         if exists:
@@ -233,9 +238,10 @@ class Manager :
             print( "Running simulation " + hashid[0:6] + "..." + ncfile[-9:])
             #First write the json file into the database
             # so that the program can read it as input
-            with open( self.jsonfile(js), 'w') as f:
-                inputstring = json.dumps( js, sort_keys=True, ensure_ascii=True)
-                f.write( inputstring)
+            if not os.path.isfile(self.jsonfile(js)) :
+                with open( self.jsonfile(js), 'w') as f:
+                    json.dump( js, f,
+                        sort_keys=True, ensure_ascii=True, indent=4)
             #Run the code to create output file
             try :
                 # Check if the simulation is a restart
@@ -265,10 +271,10 @@ class Manager :
 
             return ncfile
 
-    def recreate( self, js, n = 0, error = "raise", stdout="ignore"):
-        """ Force a re-simulation: delete(js, n) followed by create(js, n, error, stdout) """
+    def recreate( self, js, n = 0, name = "", error = "raise", stdout="ignore"):
+        """ Force a re-simulation: delete(js, n) followed by create(js, n, name, error, stdout) """
         self.delete(js, n)
-        return self.create(js, n, error, stdout)
+        return self.create(js, n, name, error, stdout)
 
     def select( self, js, n = 0) :
         """ Select an output file based on its input parameters
@@ -352,8 +358,10 @@ class Manager :
                     number = self.count( js) # count how many exist
                     for n in range( 0, number) :
                         ncfile = self.outfile( js, n)
+                        registry = self.get_registry()
                         entry = {
-                            "id" : self.hashinput( js),
+                            "id" : registry.get(self.hashinput( js),
+                                self.hashinput( js)),
                             "n" : n,
                             "inputfile" : self.jsonfile(js),
                             "outputfile" : ncfile,
@@ -409,8 +417,12 @@ class Manager :
         Return:
         path: the file path of the input file
         """
+        registry = self.get_registry()
         hashid = self.hashinput(js)
-        return os.path.join(self.__directory, hashid+'.json')
+        name = hashid
+        if hashid in registry :
+            name = registry[hashid]
+        return os.path.join(self.__directory, name+'.json')
 
     def outfile( self, js, n = 0) :
         """ File path to output file from the input
@@ -423,20 +435,91 @@ class Manager :
         sim_num = ""
         if n > 0 :
             sim_num = hex(n)
+        registry = self.get_registry()
+        name = hashid
+        if hashid in registry :
+            name = registry[hashid]
         if "json" == self.__filetype :
             return os.path.join( self.__directory,
-                    hashid + sim_num + '_out.json')
+                    name + sim_num + '_out.json')
         return os.path.join(self.__directory,
-                hashid + sim_num + '.' + self.__filetype)
+                name + sim_num + '.' + self.__filetype)
+
+    def register(self, js, name):
+        """ Register a human readable name for the given input dictionary
+
+        If the given dictionary already has a name associated to it
+        an Exception will be raised
+        Params:
+        js (dict): the complete input file as a python dictionary. All keys
+        must be strings such that js can be converted to JSON.
+        name (string) : A human readable name/id that is henceforth used in the
+        naming of all files associated with js.
+        """
+        registry = self.get_registry()
+        hashid = self.hashinput(js)
+        if hashid in registry :
+            if name != registry[hashid]:
+                raise Exception( "The name '"+name+"' cannot be used! The\
+ input file is already known under the name '"+registry[hashid]+"'. Use\
+ delete to clear the registry.")
+        else :
+            jsonfile = os.path.join(self.__directory, hashid+'.json')
+            if os.path.isfile( jsonfile) :
+                raise Exception( "The name '"+name+"' cannot be used! The\
+ input file is already known under the name '"+jsonfile+"'. Use\
+ delete to clear the registry.")
+
+            registry[hashid] = name
+        self.set_registry(registry)
+
+    def get_registry( self):
+        """ Get a dictionary containing the mapping from sha to names
+
+        Return:
+        dict: may be empty, contains all registered names
+        """
+        registryFile = os.path.join(self.__directory,
+                '.simplesimdb-registry.json')
+        registry = dict()
+        if os.path.isfile( registryFile) :
+            with open( registryFile, "r") as f :
+                registry = json.load(f)
+        return registry
+
+    def set_registry(self, registry):
+        """ Set the registry with a dictionary containing mapping from sha to names
+
+        Use with care!
+        Params:
+        registry (dict) : if empty, the registry is deleted
+        """
+        registryFile = os.path.join(self.__directory,
+                '.simplesimdb-registry.json')
+        with open( registryFile, "w") as f :
+            json.dump( registry, f,
+                    sort_keys=True, ensure_ascii=True, indent=4)
+        if not registry :
+            os.remove( registryFile)
 
     def delete( self, js, n = 0) :
-        """ Delete an entry if it exists """
+        """ Delete an entry if it exists
+
+        In case n>0, only the outputfile outfile(js,n) will be removed.
+        In case n==0, both the outfile as well as the jsonfile(js) and
+            any eventual registered names will be removed
+        """
         ncfile = self.outfile( js, n)
         exists = os.path.isfile( ncfile)
         if exists :
             os.remove( ncfile)
             if n == 0 :
                 os.remove( self.jsonfile(js))
+                registry = self.get_registry()
+                hashid = self.hashinput(js)
+                if hashid in registry :
+                    del registry[hashid]
+                self.set_registry( registry)
 
     def delete_all (self) :
         """ Delete all file pairs id'd by the files method
@@ -450,6 +533,8 @@ class Manager :
             if entry["n"] == 0 :
                 os.remove( entry["inputfile"])
             os.remove( entry["outputfile"])
+        registry = dict()
+        self.set_registry( registry)
         try :
             os.rmdir( self.__directory)
         except OSError as e:

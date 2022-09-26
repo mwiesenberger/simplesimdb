@@ -58,6 +58,20 @@ def test_restart () :
     m.delete_all()
     assert not os.path.isdir( m.directory)
 
+def test_named_creation() :
+    print ( "TEST NAMED CREATION")
+    m = sim.Manager( directory='creation_named_test', executable='touch', filetype = 'json')
+    inputdata = {"Hello": "World"}
+    m.create( inputdata, 0)
+    m.delete(inputdata, 0)
+    m.create(inputdata, 0, "hello")
+    m.create(inputdata, 1, "hello")
+    content = m.table( )
+    print( m.files())
+    assert content == [inputdata]
+    m.delete_all()
+    assert not os.path.isdir( m.directory)
+
 def test_repeater() :
     print( "TEST REPEATER")
     m = sim.Repeater( "touch", "temp.json", "temp.nc")
