@@ -2,7 +2,7 @@ import pytest
 import simplesimdb as sim
 import os.path
 
-# Run with pytest --capture=tee-sys . to see stdout output
+# Run with pytest -s . to see stdout output
 
 def test_construction_and_destruction():
     print ( "TEST")
@@ -47,10 +47,14 @@ def test_restart () :
     assert count  == 17
     data = m.select( inputdata, 3)
     assert os.path.isfile( data)
+    inputdata2 =  {"Hello2": "World"}
+    for i in range(0,7) :
+        m.create( inputdata2, i)
     content = m.table()
-    assert content == [inputdata]
+    # Check ordered content
+    assert content == [inputdata2,inputdata]
     files = m.files()
-    assert( len(files) == 17)
+    assert( len(files) == 24)
     m.delete_all()
     assert not os.path.isdir( m.directory)
 

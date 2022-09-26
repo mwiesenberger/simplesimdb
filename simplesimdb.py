@@ -115,7 +115,7 @@ class Manager :
         filetype (string) : file extension of the output files
         executable (string) : The executable that generates the data
 
-        executable be called using subprocess.run([executable,
+        executable is called using subprocess.run([executable,
         directory/hashid.json, directory/hashid.filetype],...) with 2 arguments
         - a json file as input (do not change the input else the file is not
         recognized any more) and one output file (that executable needs to
@@ -332,13 +332,14 @@ class Manager :
         return os.path.isfile( ncfile)
 
     def files(self):
-        """ Return a list of ids and files existing in directory
+        """ Return a list of dictionaries (sorted by id and number) with ids
+            and files existing in directory
 
         The purpose here is to give the user an iterable object to search
         or tabularize the content of outputfiles
         Return:
         list of dict : [ {"id": id, "n", n, "inputfile":jsonfile,
-            "outputfile" : outfile}]
+            "outputfile" : outfile}], sorted by 'id' and 'n'
         """
 
         table = []
@@ -358,7 +359,7 @@ class Manager :
                             "outputfile" : ncfile,
                         }
                         table.append(entry)
-        return table
+        return sorted(table, key=lambda item : (item['id'], item['n']))
 
     def table(self):
         """ Return all exisiting (input)-data in a list of python dicts
