@@ -86,6 +86,44 @@ In this example `execute.sh` parses the json input into command line arguments t
 # so we parse the json string using jq
 cat $1 | jq '.n, .Nx, .Ny, .Nz, .mx, .my' | $FELTOR_PATH/inc/geometries/ds_t > $2
 ```
+### Human readable names
+Sometimes, if the number of simulations to run is small a human readable naming
+scheme is preferable over the unintuitive sha1 file names. The first
+idea would be to name the data directory in a descriptive way. If this
+is still not enough, the `create` function allows to use a user given name
+instead of the sha1 filename. In order for this to work an additional file
+`simplesimdb.json` will be created where the map from sha1 to user name is stored.
+For example the above example reads
+
+```python
+### example.py ###
+import json
+import simplesimdb
+import yaml
+
+db = simplesimdb.Manager( directory = 'ds_data', filetype='yaml', executable='./execute.sh')
+# Let us generate an inputfile for our simulation
+inputfile = { "n": 3, "Nx" : 20, "Ny" : 20, "Nz" : 20,
+              "mx" : 10, "my" : 10 }
+# Now we choose the name "test" for this simulation
+outfile = db.create( inputfile, name = "test")
+```
+If we now inspect the `ds_data` folder we will find:
+```bash
+cd ds_data
+ls
+# 'simplesimdb.json' 'test.json' 'test.yaml'
+```
+The names of the input and output files are now given by `test` and we find the
+additional `simplesimddb.json`, where the naming schemes are stored, as well. Naming simulations also works on a cluster and when restarting simulations as is described in the following chapters.
+
+The following caveats need to be considered:
+
+- Simulations cannot be renamed except by deleting and resimulating
+- A name cannot be used more than once
+- when copying data from the repository the "simplesimdb.json" file must also be copied so that simplesimdb can recognize the names in the new folder
+
+
 
 ### Running on a cluster
 
@@ -405,14 +443,17 @@ rep.clean()
 diag.clean()
 ```
 
-## Current limitations
+## Caveats
 
 - Cannot manage simulations with more than one input file
-  (probably the easiest solution is to concatenate the two files)
+  (but you can write a shell script that simple adds the second input file)
 - Cannot manage simulations with more than one output file
+   (again, with a script you can add a second output file)
 - Cannot manage existing simulation files that do not have names assigned by the module
-- Do not capture the stdout and stderr streams of the executable. It is recommended that you redirect these streams into a file output yourself if you need it
-- simplesimdb considers a simulation successful if the output file exists. It cannot realize whether the content of the file is sane or corrupt, or whether there is any content at all for that matter 
+    (You can register names manually with the `register` function)
+- Do not capture the stdout and stderr streams of the executable.
+    (It is recommended that you redirect these streams into a file output yourself if you need it)
+- simplesimdb considers a simulation successful if the output file exists. It cannot realize whether the content of the file is sane or corrupt, or whether there is any content at all for that matter
 
 ## Why not just use an existing database management software like SQL
 
@@ -428,12 +469,12 @@ diag.clean()
    like MongoDB that can  manage large files (videos, images, PDFs, etc.) along
    with supporting information (metadata) that fits naturally into JSON
    documents, but
- - Netcdf (or other output) files do not really map nicely into the mongodb
+    - Netcdf (or other output) files do not really map nicely into the mongodb
    data model since files larger than 16 MB require another FileGS server to be
    run
- - If netcdf files are stored by the DB manager how do we get access to it
+    - If netcdf files are stored by the DB manager how do we get access to it
    through other external programs like for example paraview?
- - If json files are hidden by the database manager how do we use them as input
+    - If json files are hidden by the database manager how do we use them as input
    to run an executable to generate the output file?
 
 ## Contributions
