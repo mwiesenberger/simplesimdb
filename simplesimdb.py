@@ -471,6 +471,11 @@ class Manager :
  delete to clear the registry.")
 
             registry[hashid] = name
+        for key, value in registry.items():
+            if (value == name) and key != hashid:
+                raise Exception( "The name '"+name+"' is already in use\
+ for a different simulation. Choose a different name!")
+
         self.set_registry(registry)
 
     def get_registry( self):
@@ -480,7 +485,7 @@ class Manager :
         dict: may be empty, contains all registered names
         """
         registryFile = os.path.join(self.__directory,
-                '.simplesimdb-registry.json')
+                'simplesimdb.json')
         registry = dict()
         if os.path.isfile( registryFile) :
             with open( registryFile, "r") as f :
@@ -495,7 +500,7 @@ class Manager :
         registry (dict) : if empty, the registry is deleted
         """
         registryFile = os.path.join(self.__directory,
-                '.simplesimdb-registry.json')
+                'simplesimdb.json')
         with open( registryFile, "w") as f :
             json.dump( registry, f,
                     sort_keys=True, ensure_ascii=True, indent=4)
