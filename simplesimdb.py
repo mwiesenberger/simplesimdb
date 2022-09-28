@@ -202,20 +202,21 @@ class Manager :
         Parameters:
         js (dict): the complete input file as a python dictionary. All keys
             must be strings such that js can be converted to JSON.
-        name (string) : A human readable name/id that is used in the
-            naming of all files associated with js.
-            For example the input is called 'name.json'.
-            If empty, the simplesimdb.json file will be searched for a name,
-            afterwards the default sha based naming scheme will be used.
-            A name must only be given once (see also register).
-            Once a name is given it can only be changed by deleting and
-            resimulating the output. Exceptions will be raised on name clashes.
-            Names will be stored and mapped to their sha1 in the file
-            "simplesimdb.json"
         n (integer) : (RESTART ADDON) the number of the simulation
             beginning with 0.  If n>0, we will use the previous simulation as a
             third argument subprocess.run( [executable, in.json, out_n, out_(n-1)])
             This can be used to restart simulations
+        name (string) : A [optional] human readable name/id that is used in the
+            naming of all files associated with js.
+            For example the input is called '<name>.json'.
+            If empty, the simplesimdb.json file will be searched for a name,
+            afterwards the default sha based naming scheme will be used,
+            for example '<sha1>.json'.
+            Once a name is given it can only be changed by deleting and
+            resimulating the output. Exceptions will be raised on name clashes.
+            Names will be stored and mapped to their sha1 in the file
+            "simplesimdb.json"
+            See also: register
         error (string) :
             "raise"
             raise a subprocess.CalledProcessError error
