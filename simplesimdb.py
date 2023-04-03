@@ -206,7 +206,7 @@ class Manager :
             beginning with 0.  If n>0, we will use the previous simulation as a
             third argument subprocess.run( [executable, in.json, out_n, out_(n-1)])
             This can be used to restart simulations
-        name (string) : A [optional] human readable name/id that is used in the
+        name (string) : [OPTIONAL] human readable name/id that is used in the
             naming of all files associated with js.
             For example the input is called '<name>.json'.
             If empty, the simplesimdb.json file will be searched for a name,
@@ -478,7 +478,7 @@ class Manager :
     def register(self, js, name):
         """ Register a human readable name for the given input dictionary
 
-        The regitry is stored in the file "simplesimdb.json"
+        The registry is stored in the file "simplesimdb.json"
         If the given dictionary already has a name associated to it the name is
         already in use or the input file exists under a different name an
         Exception will be raised
