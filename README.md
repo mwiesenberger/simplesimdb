@@ -33,18 +33,18 @@ pip install -e . # editable installation of the module
 pytest . # run the unittests
 ```
 ## Overview
-Simplesimdb provides a Python interface to
- - generate json input files from given python dictionaries and assign a unique id
- - call the user provided executable on an input file to create the
+The following flow chart shows the basic functionality of creating and searching data. Simplesimdb
+ - generates json input files from given python dictionaries and assigns a unique id
+ - calls the user provided executable on an input file to create the
    corresponding output file
- - find an existing output file given the input parameters
- - provide a searchable list of all input parameters for which output data exists in the database
+ - finds an existing output file given the input parameters
 
-The following flow chart shows the basic functionality of creating data with simplesimdb.
+<img src="https://feltor-dev.github.io/images/simplesimdb1.png" alt="Create" width="700"/>
 
-![Overview](https://feltor-dev.github.io/images/simplesimdb1.png)
-and searching data
-![Overview](https://feltor-dev.github.io/images/simplesimdb2.png)
+ - provides a searchable list of all input parameters for which output data exists in the database
+
+<img src="https://feltor-dev.github.io/images/simplesimdb2.png" alt="Search" width="500"/>
+
 ## Getting started
 
 
