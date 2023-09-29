@@ -2,6 +2,16 @@
 A python module for creation and management of simple simulation data.
 Essentially, a very basic database manager that creates its own data.
 
+Simplesimdb is typically used to generate and analyse research data from a Python
+script, where the data generation is done by an external (typically highly optimized
+  , written in C/C++ say) code
+ that generates an output for a given set of input parameters.
+ The emphasize here is on the fact that the parameter generation, code execution and
+ data management loop is **automated**, which allows the user to run large
+ parameter scans with a few lines of Python code **without manual interference**.
+ In this way for example publication grade plots can be (re-)produced from
+ scratch by just executing Python scripts. (See for example the
+   [impurities project](https://github.com/mwiesenberger/impurities) )
 
 [![LICENSE : MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -22,19 +32,22 @@ pip install -e . # editable installation of the module
 # ... if asked, cancel all password prompts ...
 pytest . # run the unittests
 ```
-
-## Usage
-Use this module if you have (i) an executable (the simulation code) that takes a set of input parameters
-and generates a single output file and (ii) you want to explore a large region of the
-available parameter space ( large here means more than you want to do by hand
-but probably less than millions say).
-Its tasks are
- - generate json input files from given python dictioniaries and assign unique
-   filenames
- - call the user provided executable on the input files to create the
+## Overview
+Simplesimdb provides a Python interface to
+ - generate json input files from given python dictionaries and assign a unique id
+ - call the user provided executable on an input file to create the
    corresponding output file
- - select existing output files from the data folder based on a given input
- - display all input parameters for which output data exists in the folder
+ - find an existing output file given the input parameters
+ - provide a searchable list of all input parameters for which output data exists in the database
+
+The following flow chart shows the basic functionality of creating data with simplesimdb.
+
+![Overview](https://feltor-dev.github.io/images/simplesimdb1.png)
+and searching data
+![Overview](https://feltor-dev.github.io/images/simplesimdb2.png)
+## Getting started
+
+
 
 ### A first example
 
@@ -50,7 +63,7 @@ db = simplesimdb.Manager(
     directory = 'ds_data', # where to store the generated data
     filetype='yaml', # file-ending of the output files
     executable='./execute.sh' # the program to execute to generate data
-) 
+)
 
 # Let us generate an inputfile for our simulation
 inputfile = { "n": 3, "Nx" : 20, "Ny" : 20, "Nz" : 20,
@@ -65,13 +78,13 @@ with open( outfile) as f:
     print (json.dumps(output, indent=4))
 
 # list all existing inputfiles in the directory
-content = db.table() 
+content = db.table()
 # the list of inputfiles is searchable:
 found = list( filter( lambda entry : ( entry["mx"] == 10), content) )
 # select a simulation if it exists
-outfile = db.select( found[0]) 
+outfile = db.select( found[0])
 # delete all generated data in directory and the directory itself
-db.delete_all() 
+db.delete_all()
 ```
 where `execute.sh` is an executable that takes `directory/hashid.json` as input and creates the file `directory/hashid.yaml`
 In this example `execute.sh` parses the json input into command line arguments to a Feltor code and redirect its output into the yaml file.
@@ -127,9 +140,9 @@ The following caveats need to be considered:
 
 ### Running on a cluster
 
-In many cases simulations are too expensive to run on a local machine. In this case it is mandatory that simulations run on a cluster. The data could then be transfered back to  a local machine where the data exploration with for example a jupyter notebook takes place. The difficulty here is that data is created asynchronously with job submission, i.e. simplesimdb considers the simulation finished when the executable returns even if it just submitted a job to the scheduler and no data was created. Therefore the generation and analysis of data must be separate in this case and the human operator must decide when it is safe to access data and all jobs are finished. 
+In many cases simulations are too expensive to run on a local machine. In this case it is mandatory that simulations run on a cluster. The data could then be transfered back to  a local machine where the data exploration with for example a jupyter notebook takes place. The difficulty here is that data is created asynchronously with job submission, i.e. simplesimdb considers the simulation finished when the executable returns even if it just submitted a job to the scheduler and no data was created. Therefore the generation and analysis of data must be separate in this case and the human operator must decide when it is safe to access data and all jobs are finished.
 
-With simplesimdb the recommended way of achieving this scenario is: 
+With simplesimdb the recommended way of achieving this scenario is:
 
 (i) a `generate_data.py` file on the cluster
 
@@ -151,7 +164,7 @@ m.create(inputfile)
 #!/bin/bash
 
 FILE="${2%.*}" # outfilename without extension
-JOBNAME=${FILE: -8} # last 8 characters 
+JOBNAME=${FILE: -8} # last 8 characters
 
 # help simplesimdb recognize that data is being generated
 touch $2
@@ -160,7 +173,7 @@ touch $2
 sbatch -o ${FILE}.out -J $JOBNAME submit.sh "$@"
 ```
 
-We touch the output file in order to avoid mistakes where we call the create member twice such that it submits the job twice when the first job is still waiting for resources. This is because simplesimdb checks for the existence of the output file when it decides whether or not a simulation needs to be run in the create member. 
+We touch the output file in order to avoid mistakes where we call the create member twice such that it submits the job twice when the first job is still waiting for resources. This is because simplesimdb checks for the existence of the output file when it decides whether or not a simulation needs to be run in the create member.
 
 (iii) the `submit.sh` script is a template job script for all simulations
 
@@ -182,7 +195,7 @@ $FELTOR_PATH/src/reco2D/reconnection_hpc $1 $2
 There are a few caveats to this workflow:
 
 - simplesimdb has no way of knowing when a simulation is pending, running, finished or produced an error. The `execute.sh` returns if the job is successfully submitted
-- in this example all jobs run on exactly the same hardware resources since all use the same job template submit script. 
+- in this example all jobs run on exactly the same hardware resources since all use the same job template submit script.
 
 ### Restarting simulations
 
@@ -200,13 +213,13 @@ m = simplesim.Manager( directory='data', executable='./execute.sh', filetype='tx
 m.delete_all()
 # !!! after delete_all() we must reset the directory: !!!
 m.directory = 'data'
- 
+
 inputfile1 = { "Hello" : "World"}
 inputfile2 = { "Hello" : "User"}
 # generate 3 data files for each input:
 for n in range( 0,3) :
     # if n == 0 : ./execute.sh data/in.json data/out_0.txt
-    # if n  > 0 : ./execute.sh data/in.json data/out_n.txt data/out_(n-1).txt 
+    # if n  > 0 : ./execute.sh data/in.json data/out_n.txt data/out_(n-1).txt
     m.create( inputfile1, n)
     m.create( inputfile2, n)
 
@@ -263,7 +276,7 @@ inputfile2 = { "Hello" : "User"}
 
 for n in range( 0,3) :
     # if n == 0 : ./execute.sh data/in.json data/out_0.txt
-    # if n  > 0 : ./execute.sh data/in.json data/out_n.txt data/out_(n-1).txt 
+    # if n  > 0 : ./execute.sh data/in.json data/out_n.txt data/out_(n-1).txt
     m.create( inputfile1, n)
     m.create( inputfile2, n)
 ```
@@ -275,7 +288,7 @@ Next we look at `execute.sh`
 #!/bin/bash
 
 FILE="${2%.*}" # outfilename without extension
-JOBNAME=${FILE: -8} # last 8 characters 
+JOBNAME=${FILE: -8} # last 8 characters
 
 # help simplesimdb recognize that data is being generated
 touch $2
@@ -483,4 +496,3 @@ Contributions are welcome.
 ## Authors
 
 Matthias Wiesenberger
-
