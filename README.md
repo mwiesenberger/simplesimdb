@@ -3,8 +3,7 @@ A python module for creation and management of simple simulation data.
 Essentially, a very basic database manager that creates its own data.
 
 Simplesimdb is typically used to generate and analyse research data from a Python
-script, where the data generation is done by an external (typically highly optimized
-  , written in C/C++ say) code
+script, where the data generation is done by an external (typically highly optimized, written in C/C++ say) code
  that generates an output for a given set of input parameters.
  The emphasize here is on the fact that the parameter generation, code execution and
  data management loop is **automated**, which allows the user to run large
