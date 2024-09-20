@@ -610,10 +610,8 @@ class Manager:
             os.remove(entry["outputfile"])
         registry = {}
         self.set_registry(registry)
-        try:
+        with suppress(OSError):
             os.rmdir(self.__directory)
-        except OSError:
-            pass  # if the directory is non-empty nothing happens
 
 
 #### Ideas on a file view class
