@@ -79,8 +79,7 @@ class Repeater:
             process = subprocess.run(
                 [self.__executable, self.__inputfile, self.__outputfile],
                 check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                capture_output=True,
             )
             if stdout == "display":
                 print(process.stdout)
@@ -262,7 +261,7 @@ class Manager:
 
         """
         hashid = self.hashinput(js)
-        if not name == "":
+        if name != "":
             self.register(js, name)
         ncfile = self.outfile(js, n)
         exists = os.path.isfile(ncfile)
@@ -283,8 +282,7 @@ class Manager:
                     process = subprocess.run(
                         [self.__executable, self.jsonfile(js), ncfile],
                         check=True,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
+                        capture_output=True,
                     )
                     if stdout == "display":
                         print(process.stdout)
@@ -293,8 +291,7 @@ class Manager:
                     process = subprocess.run(
                         [self.__executable, self.jsonfile(js), ncfile, previous_ncfile],
                         check=True,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
+                        capture_output=True,
                     )
                     if stdout == "display":
                         print(process.stdout)
@@ -393,7 +390,7 @@ class Manager:
         table = []
         for filename in os.listdir(self.__directory):
             if filename.endswith(".json") and not filename.endswith("out.json"):
-                with open(os.path.join(self.__directory, filename), "r") as f:
+                with open(os.path.join(self.__directory, filename)) as f:
                     # load all json files and check if they are named correctly
                     # and have a corresponding output file
                     js = json.load(f)
@@ -489,7 +486,7 @@ class Manager:
         name = hashid
         if hashid in registry:
             name = registry[hashid]
-        if "json" == self.__filetype:
+        if self.__filetype == "json":
             return os.path.join(self.__directory, name + sim_num + "_out.json")
         return os.path.join(self.__directory, name + sim_num + "." + self.__filetype)
 
@@ -556,9 +553,9 @@ class Manager:
         dict: may be empty, contains all registered names
         """
         registryFile = os.path.join(self.__directory, "simplesimdb.json")
-        registry = dict()
+        registry = {}
         if os.path.isfile(registryFile):
-            with open(registryFile, "r") as f:
+            with open(registryFile) as f:
                 registry = json.load(f)
         return registry
 
@@ -611,7 +608,7 @@ class Manager:
             if entry["n"] == 0:
                 os.remove(entry["inputfile"])
             os.remove(entry["outputfile"])
-        registry = dict()
+        registry = {}
         self.set_registry(registry)
         try:
             os.rmdir(self.__directory)
