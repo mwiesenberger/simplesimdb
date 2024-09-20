@@ -4,6 +4,12 @@ import hashlib # for the hashing
 import os.path # to check for files
 import subprocess # to run the create program
 
+from contextlib import suppress
+from importlib.metadata import PackageNotFoundError, version
+
+with suppress(PackageNotFoundError):
+    __version__ = version(__package__)
+
 
 class Repeater :
     """ Manage a single file pair (inputfile, outputfile)

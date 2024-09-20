@@ -1,0 +1,42 @@
+[project]
+name = "simplesimdb"
+description = "Create, access and manage simple simulation data"
+authors = [
+    {name = "Matthias Wiesenberger", email = "mattwi@fysik.dtu.dk"},
+]
+license = {file = "LICENSE"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Utilities",
+    "Topic :: Database"
+]
+dynamic = ["version"]
+
+[project.urls]
+Source = "https://github.com/mwiesenberger/simplesimdb"
+Tracker = "https://github.com/mwiesenberger/simplesimdb/issues"
+
+[project.optional-dependencies]
+test = [
+  "pytest",
+]
+lint = [
+  "ruff",
+]
+
+[build-system]
+requires = [
+    "setuptools >= 65",
+    "setuptools_scm >= 8.0.0",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+version_file = "src/simplesimdb/_version.py"
