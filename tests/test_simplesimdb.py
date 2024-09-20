@@ -1,4 +1,3 @@
-import pytest
 import simplesimdb as sim
 import os.path
 

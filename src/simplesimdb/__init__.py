@@ -588,7 +588,7 @@ class Manager :
         self.set_registry( registry)
         try :
             os.rmdir( self.__directory)
-        except OSError as e:
+        except OSError:
             pass # if the directory is non-empty nothing happens
 
 #### Ideas on a file view class
