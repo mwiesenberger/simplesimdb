@@ -2,6 +2,7 @@
 
 import hashlib  # for the hashing
 import json
+import operator
 import os.path  # to check for files
 import subprocess  # to run the create program
 from contextlib import suppress
@@ -405,7 +406,7 @@ class Manager:
                             "outputfile": ncfile,
                         }
                         table.append(entry)
-        return sorted(table, key=lambda item: (item["id"], item["n"]))
+        return sorted(table, key=operator.itemgetter("id", "n"))
 
     def table(self):
         """Return all exisiting (input)-data in a list of python dicts
@@ -614,7 +615,7 @@ class Manager:
             os.rmdir(self.__directory)
 
 
-#### Ideas on a file view class
+# Ideas on a file view class
 # - for projects that are not managed or created with simplesimdb
 # - We can have a class managing a view of (input.json, outfile) pairs
 #   without creating files but just managing the inputs
