@@ -30,13 +30,16 @@ test = [
 
 [build-system]
 requires = [
-    "setuptools >= 65",
-    "setuptools-scm >= 8.0.0",
+    "hatchling",
+    "hatch-vcs",
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "hatchling.build"
 
-[tool.setuptools_scm]
-version_file = "src/simplesimdb/_version.py"
+[tool.hatch.build]
+include = ["simplesimdb.py"]
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.ruff.lint]
 select = [
