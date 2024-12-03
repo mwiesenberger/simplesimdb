@@ -27,9 +27,6 @@ Tracker = "https://github.com/mwiesenberger/simplesimdb/issues"
 test = [
   "pytest",
 ]
-lint = [
-  "ruff",
-]
 
 [build-system]
 requires = [
