@@ -611,7 +611,7 @@ class Manager:
             os.remove(entry["outputfile"])
         registry = {}
         self.set_registry(registry)
-        with suppress(OSError):
+        with suppress(OSError): # if the directory is non-empty, nothing happens
             os.rmdir(self.__directory)
 
 
