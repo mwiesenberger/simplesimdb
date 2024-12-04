@@ -1,12 +1,19 @@
 """Creation and management of simple simulation data"""
+
+import hashlib  # for the hashing
 import json
-import hashlib # for the hashing
-import os.path # to check for files
-import subprocess # to run the create program
+import operator
+import os.path  # to check for files
+import subprocess  # to run the create program
+from contextlib import suppress
+from importlib.metadata import PackageNotFoundError, version
+
+with suppress(PackageNotFoundError):
+    __version__ = version("simplesimdb")
 
 
-class Repeater :
-    """ Manage a single file pair (inputfile, outputfile)
+class Repeater:
+    """Manage a single file pair (inputfile, outputfile)
 
     The purpose of this class is to provide a simple tool when you do not want
     to actually store simulation data on disc (except temporarily). It is
@@ -14,32 +21,41 @@ class Repeater :
     and then reuse/overwrite it in all subsequent simulations.
 
     """
-    def __init__ (self, executable="./execute.sh", inputfile="temp.json", outputfile="temp.nc"):
-        """ Set the executable and files to use in the run method"""
+
+    def __init__(
+        self, executable="./execute.sh", inputfile="temp.json", outputfile="temp.nc"
+    ):
+        """Set the executable and files to use in the run method"""
         self.executable = executable
         self.inputfile = inputfile
         self.outputfile = outputfile
+
     @property
     def executable(self):
         return self.__executable
+
     @property
     def inputfile(self):
         return self.__inputfile
+
     @property
     def outputfile(self):
         return self.__outputfile
+
     @executable.setter
-    def executable(self, executable) :
+    def executable(self, executable):
         self.__executable = executable
+
     @inputfile.setter
-    def inputfile(self, inputfile) :
+    def inputfile(self, inputfile):
         self.__inputfile = inputfile
+
     @outputfile.setter
-    def outputfile(self, outputfile) :
+    def outputfile(self, outputfile):
         self.__outputfile = outputfile
 
-    def run( self, js, error="display", stdout="ignore"):
-        """ Write inputfile and then run a simulation
+    def run(self, js, error="display", stdout="ignore"):
+        """Write inputfile and then run a simulation
 
         js (dict): the complete input file as a python dictionary. All keys
             must be strings such that js can be converted to JSON.
@@ -58,32 +74,32 @@ class Repeater :
             print( process.stdout)
             return
         """
-        with open( self.inputfile, 'w') as f:
-            json.dump( js, f,
-                    sort_keys=True, ensure_ascii=True, indent=4)
-        try :
-            process = subprocess.run( [self.__executable, self.__inputfile,
-                    self.__outputfile],
-                    check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if stdout == "display" :
-                print( process.stdout)
+        with open(self.inputfile, "w") as f:
+            json.dump(js, f, sort_keys=True, ensure_ascii=True, indent=4)
+        try:
+            process = subprocess.run(
+                [self.__executable, self.__inputfile, self.__outputfile],
+                check=True,
+                capture_output=True,
+            )
+            if stdout == "display":
+                print(process.stdout)
         except subprocess.CalledProcessError as e:
-            if error == "display" :
-                print( e.stderr)
-            elif error == "raise" :
+            if error == "display":
+                print(e.stderr)
+            elif error == "raise":
                 raise e
-    def clean(self) :
-        """ Remove inputfile and outputfile"""
-        if os.path.isfile( self.__inputfile) :
-            os.remove( self.__inputfile)
-        if os.path.isfile( self.__outputfile) :
-            os.remove( self.__outputfile)
+
+    def clean(self):
+        """Remove inputfile and outputfile"""
+        if os.path.isfile(self.__inputfile):
+            os.remove(self.__inputfile)
+        if os.path.isfile(self.__outputfile):
+            os.remove(self.__outputfile)
 
 
-
-
-class Manager :
-    """ Lightweight Simulation Database Manager
+class Manager:
+    """Lightweight Simulation Database Manager
 
     Create, access and display simulation data of a given code as pairs
     (inputfile.json : outputfile [, restarted_01, restarted_02, ...]),
@@ -116,8 +132,8 @@ class Manager :
     the correct name.
     """
 
-    def __init__ (self, directory = './data', filetype='nc', executable="./execute.sh"):
-        """ init the Manager class
+    def __init__(self, directory="./data", filetype="nc", executable="./execute.sh"):
+        """init the Manager class
 
         Parameters
         directory (path) : the path of the folder this class manages.
@@ -141,15 +157,15 @@ class Manager :
         that is it must take a third argument (the previous simulation)
         """
         self.directory = directory
-        os.makedirs( self.__directory, exist_ok=True)
+        os.makedirs(self.__directory, exist_ok=True)
         self.filetype = filetype
         self.executable = executable
 
     @property
     def directory(self):
-        """ (path) : data directory
+        """(path) : data directory
 
-        If the directory does not exist it will be created """
+        If the directory does not exist it will be created"""
         return self.__directory
 
     @property
@@ -175,23 +191,23 @@ class Manager :
 
     @property
     def filetype(self):
-        """ (string) : file extension of the output files """
+        """(string) : file extension of the output files"""
         return self.__filetype
 
     @directory.setter
-    def directory(self, directory) :
+    def directory(self, directory):
         self.__directory = directory
-        os.makedirs( self.__directory, exist_ok=True)
+        os.makedirs(self.__directory, exist_ok=True)
 
     @executable.setter
-    def executable(self, executable) :
+    def executable(self, executable):
         self.__executable = executable
 
     @filetype.setter
-    def filetype(self, filetype) :
+    def filetype(self, filetype):
         self.__filetype = filetype
 
-    def create( self, js, n = 0, name = "", error = "raise", stdout="ignore"):
+    def create(self, js, n=0, name="", error="raise", stdout="ignore"):
         """Run a simulation if outfile does not exist yet
 
         Create (write) the in.json file to disc
@@ -246,58 +262,61 @@ class Manager :
 
         """
         hashid = self.hashinput(js)
-        if not name == "" :
-            self.register( js, name)
-        ncfile = self.outfile( js, n)
-        exists = os.path.isfile( ncfile)
+        if name != "":
+            self.register(js, name)
+        ncfile = self.outfile(js, n)
+        exists = os.path.isfile(ncfile)
         if exists:
-            print( "Existing simulation " + hashid[0:6] + "..." + ncfile[-9:])
+            print("Existing simulation " + hashid[0:6] + "..." + ncfile[-9:])
             return ncfile
-        else :
-            print( "Running simulation " + hashid[0:6] + "..." + ncfile[-9:])
-            #First write the json file into the database
+        else:
+            print("Running simulation " + hashid[0:6] + "..." + ncfile[-9:])
+            # First write the json file into the database
             # so that the program can read it as input
-            if not os.path.isfile(self.jsonfile(js)) :
-                with open( self.jsonfile(js), 'w') as f:
-                    json.dump( js, f,
-                        sort_keys=True, ensure_ascii=True, indent=4)
-            #Run the code to create output file
-            try :
+            if not os.path.isfile(self.jsonfile(js)):
+                with open(self.jsonfile(js), "w") as f:
+                    json.dump(js, f, sort_keys=True, ensure_ascii=True, indent=4)
+            # Run the code to create output file
+            try:
                 # Check if the simulation is a restart
-                if n == 0 :
-                    process = subprocess.run( [self.__executable, self.jsonfile(js),
-                        ncfile],
-                        check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    if stdout == "display" :
-                        print( process.stdout)
-                else :
-                    previous_ncfile = self.outfile( js, n-1)
-                    process = subprocess.run( [self.__executable, self.jsonfile(js),
-                        ncfile, previous_ncfile],
-                        check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    if stdout == "display" :
-                        print( process.stdout)
+                if n == 0:
+                    process = subprocess.run(
+                        [self.__executable, self.jsonfile(js), ncfile],
+                        check=True,
+                        capture_output=True,
+                    )
+                    if stdout == "display":
+                        print(process.stdout)
+                else:
+                    previous_ncfile = self.outfile(js, n - 1)
+                    process = subprocess.run(
+                        [self.__executable, self.jsonfile(js), ncfile, previous_ncfile],
+                        check=True,
+                        capture_output=True,
+                    )
+                    if stdout == "display":
+                        print(process.stdout)
             except subprocess.CalledProcessError as e:
-                #clean up entry and escalate exception
-                if os.path.isfile( ncfile) :
-                    os.remove( ncfile)
-                if n == 0 : # only remove input if not restarted
-                    os.remove( self.jsonfile(js))
-                if error == "display" :
-                    print( e.stderr)
-                elif error == "raise" :
+                # clean up entry and escalate exception
+                if os.path.isfile(ncfile):
+                    os.remove(ncfile)
+                if n == 0:  # only remove input if not restarted
+                    os.remove(self.jsonfile(js))
+                if error == "display":
+                    print(e.stderr)
+                elif error == "raise":
                     raise e
 
             return ncfile
 
-    def recreate( self, js, n = 0, name = "", error = "raise", stdout="ignore"):
-        """ Force a re-simulation:
-            delete(js, n) followed by create(js, n, name, error, stdout) """
+    def recreate(self, js, n=0, name="", error="raise", stdout="ignore"):
+        """Force a re-simulation:
+        delete(js, n) followed by create(js, n, name, error, stdout)"""
         self.delete(js, n)
         return self.create(js, n, name, error, stdout)
 
-    def select( self, js, n = 0) :
-        """ Select an output file based on its input parameters
+    def select(self, js, n=0):
+        """Select an output file based on its input parameters
 
         Raise a ValueError exception if the file does not exist
         else it just returns self.outfile( js, n)
@@ -316,15 +335,15 @@ class Manager :
         Return:
         string: self.outfile( js, n) if file exists
         """
-        ncfile = self.outfile( js, n)
-        exists = os.path.isfile( ncfile)
+        ncfile = self.outfile(js, n)
+        exists = os.path.isfile(ncfile)
         if not exists:
-            raise ValueError( 'Entry does not exist')
-        else :
+            raise ValueError("Entry does not exist")
+        else:
             return ncfile
 
-    def count( self, js) :
-        """ (RESTART ADDON) Count number of output files for given input
+    def count(self, js):
+        """(RESTART ADDON) Count number of output files for given input
 
         Count the output files associated with the given input parameters that
         currently exist in directory
@@ -338,13 +357,13 @@ class Manager :
         integer: Number of simulations
         """
         number = 0
-        while self.exists( js, number) :
+        while self.exists(js, number):
             number += 1
 
         return number
 
-    def exists( self, js, n = 0) :
-        """ Check for existence of data
+    def exists(self, js, n=0):
+        """Check for existence of data
 
         Parameters:
         js (dict): the complete input file as a python dictionary. All keys
@@ -355,11 +374,11 @@ class Manager :
         Return:
         bool: True if output data corresponding to js exists, False else
         """
-        ncfile = self.outfile( js, n)
-        return os.path.isfile( ncfile)
+        ncfile = self.outfile(js, n)
+        return os.path.isfile(ncfile)
 
     def files(self):
-        """ Return a list of dictionaries (sorted by id and number) with ids
+        """Return a list of dictionaries (sorted by id and number) with ids
             and files existing in directory
 
         The purpose here is to give the user an iterable object to search
@@ -370,28 +389,27 @@ class Manager :
         """
 
         table = []
-        for filename in os.listdir(self.__directory) :
-            if filename.endswith(".json") and not filename.endswith( "out.json") :
-                with open( os.path.join( self.__directory, filename), 'r') as f:
-                    #load all json files and check if they are named correctly
+        for filename in os.listdir(self.__directory):
+            if filename.endswith(".json") and not filename.endswith("out.json"):
+                with open(os.path.join(self.__directory, filename)) as f:
+                    # load all json files and check if they are named correctly
                     # and have a corresponding output file
-                    js = json.load( f)
-                    number = self.count( js) # count how many exist
-                    for n in range( 0, number) :
-                        ncfile = self.outfile( js, n)
+                    js = json.load(f)
+                    number = self.count(js)  # count how many exist
+                    for n in range(0, number):
+                        ncfile = self.outfile(js, n)
                         registry = self.get_registry()
                         entry = {
-                            "id" : registry.get(self.hashinput( js),
-                                self.hashinput( js)),
-                            "n" : n,
-                            "inputfile" : self.jsonfile(js),
-                            "outputfile" : ncfile,
+                            "id": registry.get(self.hashinput(js), self.hashinput(js)),
+                            "n": n,
+                            "inputfile": self.jsonfile(js),
+                            "outputfile": ncfile,
                         }
                         table.append(entry)
-        return sorted(table, key=lambda item : (item['id'], item['n']))
+        return sorted(table, key=operator.itemgetter("id", "n"))
 
     def table(self):
-        """ Return all exisiting (input)-data in a list of python dicts
+        """Return all exisiting (input)-data in a list of python dicts
 
         Use json.dumps(table(), indent=4) to pretty print
         Note that this list of dictionaries is searchable/ iteratable with standard
@@ -404,15 +422,15 @@ class Manager :
             content of the inputfiles
         """
         files = self.files()
-        table=[]
-        for d in files :
-            with open( d["inputfile"]) as f :
-                js = json.load( f)
-                if d["n"] == 0 :
-                    table.append( js)
+        table = []
+        for d in files:
+            with open(d["inputfile"]) as f:
+                js = json.load(f)
+                if d["n"] == 0:
+                    table.append(js)
         return table
 
-    def hashinput( self, js):
+    def hashinput(self, js):
         """Hash the input dictionary
 
         Params:
@@ -427,12 +445,12 @@ class Manager :
         Return:
         string: The hexadecimal sha1 hashid of the input dictionary
         """
-        inputstring = json.dumps( js, sort_keys=True, ensure_ascii=True)
-        hashed = hashlib.sha1( inputstring.encode( 'utf-8') ).hexdigest()
+        inputstring = json.dumps(js, sort_keys=True, ensure_ascii=True)
+        hashed = hashlib.sha1(inputstring.encode("utf-8")).hexdigest()
         return hashed
 
-    def jsonfile( self, js) :
-        """ File path to json file from the input
+    def jsonfile(self, js):
+        """File path to json file from the input
 
         Does not check if the file actually exists
         Parameters:
@@ -444,12 +462,12 @@ class Manager :
         registry = self.get_registry()
         hashid = self.hashinput(js)
         name = hashid
-        if hashid in registry :
+        if hashid in registry:
             name = registry[hashid]
-        return os.path.join(self.__directory, name+'.json')
+        return os.path.join(self.__directory, name + ".json")
 
-    def outfile( self, js, n = 0) :
-        """ File path to output file from the input
+    def outfile(self, js, n=0):
+        """File path to output file from the input
 
         Do not check if the file actually exists
 
@@ -463,20 +481,18 @@ class Manager :
         """
         hashid = self.hashinput(js)
         sim_num = ""
-        if n > 0 :
+        if n > 0:
             sim_num = hex(n)
         registry = self.get_registry()
         name = hashid
-        if hashid in registry :
+        if hashid in registry:
             name = registry[hashid]
-        if "json" == self.__filetype :
-            return os.path.join( self.__directory,
-                    name + sim_num + '_out.json')
-        return os.path.join(self.__directory,
-                name + sim_num + '.' + self.__filetype)
+        if self.__filetype == "json":
+            return os.path.join(self.__directory, name + sim_num + "_out.json")
+        return os.path.join(self.__directory, name + sim_num + "." + self.__filetype)
 
     def register(self, js, name):
-        """ Register a human readable name for the given input dictionary
+        """Register a human readable name for the given input dictionary
 
         The registry is stored in the file "simplesimdb.json"
         If the given dictionary already has a name associated to it the name is
@@ -490,60 +506,75 @@ class Manager :
         """
         registry = self.get_registry()
         hashid = self.hashinput(js)
-        if name == "simplesimdb" :
-            raise Exception("The name simplesimdb is not allowed. Choose a different name!")
-        if hashid in registry :
+        if name == "simplesimdb":
+            raise Exception(
+                "The name simplesimdb is not allowed. Choose a different name!"
+            )
+        if hashid in registry:
             if name != registry[hashid]:
-                raise Exception( "The name '"+name+"' cannot be used! The\
- input file is already known under the name '"+registry[hashid]+"'. Use\
- delete to clear the registry.")
-        else :
-            jsonfile = os.path.join(self.__directory, hashid+'.json')
-            if os.path.isfile( jsonfile) :
-                raise Exception( "The name '"+name+"' cannot be used! The\
- input file is already known under the name '"+jsonfile+"'. Use\
- delete to clear the registry.")
+                raise Exception(
+                    "The name '"
+                    + name
+                    + "' cannot be used! The\
+ input file is already known under the name '"
+                    + registry[hashid]
+                    + "'. Use\
+ delete to clear the registry."
+                )
+        else:
+            jsonfile = os.path.join(self.__directory, hashid + ".json")
+            if os.path.isfile(jsonfile):
+                raise Exception(
+                    "The name '"
+                    + name
+                    + "' cannot be used! The\
+ input file is already known under the name '"
+                    + jsonfile
+                    + "'. Use\
+ delete to clear the registry."
+                )
 
             registry[hashid] = name
         for key, value in registry.items():
             if (value == name) and key != hashid:
-                raise Exception( "The name '"+name+"' is already in use\
- for a different simulation. Choose a different name!")
+                raise Exception(
+                    "The name '"
+                    + name
+                    + "' is already in use\
+ for a different simulation. Choose a different name!"
+                )
 
         self.set_registry(registry)
 
-    def get_registry( self):
-        """ Get a dictionary containing the mapping from sha to names
+    def get_registry(self):
+        """Get a dictionary containing the mapping from sha to names
 
         Read the file "simplesimdb.json"
         Return:
         dict: may be empty, contains all registered names
         """
-        registryFile = os.path.join(self.__directory,
-                'simplesimdb.json')
-        registry = dict()
-        if os.path.isfile( registryFile) :
-            with open( registryFile, "r") as f :
+        registryFile = os.path.join(self.__directory, "simplesimdb.json")
+        registry = {}
+        if os.path.isfile(registryFile):
+            with open(registryFile) as f:
                 registry = json.load(f)
         return registry
 
     def set_registry(self, registry):
-        """ Set the registry with a dictionary containing mapping from sha to names
+        """Set the registry with a dictionary containing mapping from sha to names
 
         Use with care as this operation can corrupt your naming scheme!
         Params:
         registry (dict) : if empty, the registry is deleted
         """
-        registryFile = os.path.join(self.__directory,
-                'simplesimdb.json')
-        with open( registryFile, "w") as f :
-            json.dump( registry, f,
-                    sort_keys=True, ensure_ascii=True, indent=4)
-        if not registry :
-            os.remove( registryFile)
+        registryFile = os.path.join(self.__directory, "simplesimdb.json")
+        with open(registryFile, "w") as f:
+            json.dump(registry, f, sort_keys=True, ensure_ascii=True, indent=4)
+        if not registry:
+            os.remove(registryFile)
 
-    def delete( self, js, n = 0) :
-        """ Delete an entry if it exists
+    def delete(self, js, n=0):
+        """Delete an entry if it exists
 
         js (dict): the complete input file as a python dictionary. All keys
             must be strings such that js can be converted to JSON.
@@ -554,38 +585,37 @@ class Manager :
         In case n==0, both the outfile as well as the jsonfile(js) and
             any eventual registered names will be removed
         """
-        ncfile = self.outfile( js, n)
-        exists = os.path.isfile( ncfile)
-        if exists :
-            os.remove( ncfile)
-            if n == 0 :
-                os.remove( self.jsonfile(js))
+        ncfile = self.outfile(js, n)
+        exists = os.path.isfile(ncfile)
+        if exists:
+            os.remove(ncfile)
+            if n == 0:
+                os.remove(self.jsonfile(js))
                 registry = self.get_registry()
                 hashid = self.hashinput(js)
-                if hashid in registry :
+                if hashid in registry:
                     del registry[hashid]
-                self.set_registry( registry)
+                self.set_registry(registry)
 
-    def delete_all (self) :
-        """ Delete all file pairs id'd by the files method
+    def delete_all(self):
+        """Delete all file pairs id'd by the files method
 
         and the directory itself (if empty)
         ATTENTION: if you want to continue to use the object afterwards
             remember to reset the directory: m.directory = '...'
         """
         files = self.files()
-        for entry in files :
-            if entry["n"] == 0 :
-                os.remove( entry["inputfile"])
-            os.remove( entry["outputfile"])
-        registry = dict()
-        self.set_registry( registry)
-        try :
-            os.rmdir( self.__directory)
-        except OSError as e:
-            pass # if the directory is non-empty nothing happens
+        for entry in files:
+            if entry["n"] == 0:
+                os.remove(entry["inputfile"])
+            os.remove(entry["outputfile"])
+        registry = {}
+        self.set_registry(registry)
+        with suppress(OSError):  # if the directory is non-empty, nothing happens
+            os.rmdir(self.__directory)
 
-#### Ideas on a file view class
+
+# Ideas on a file view class
 # - for projects that are not managed or created with simplesimdb
 # - We can have a class managing a view of (input.json, outfile) pairs
 #   without creating files but just managing the inputs

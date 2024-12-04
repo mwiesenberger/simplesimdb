@@ -1,0 +1,63 @@
+[project]
+name = "simplesimdb"
+description = "Create, access and manage simple simulation data"
+authors = [
+    {name = "Matthias Wiesenberger", email = "mattwi@fysik.dtu.dk"},
+]
+license = {file = "LICENSE"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Utilities",
+    "Topic :: Database"
+]
+dynamic = ["version"]
+
+[project.urls]
+Source = "https://github.com/mwiesenberger/simplesimdb"
+Tracker = "https://github.com/mwiesenberger/simplesimdb/issues"
+
+[project.optional-dependencies]
+test = [
+  "pytest",
+]
+
+[build-system]
+requires = [
+    "hatchling",
+    "hatch-vcs",
+]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+include = ["simplesimdb.py"]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.ruff.lint]
+select = [
+    "F", # Pyflakes
+    "E", # pycodestyle error
+    "W", # pycodestyle warning
+    "I", # isort
+    "PT", # flake8-pytest-style
+    "B", # flake8-bugbear
+    "A", # flake8-builtins
+    "C4", # flake8-comprehensions
+    "T10", # flake8-debugger
+    # "PTH", # flake8-use-pathlib
+    "SIM", # flake8-simplify
+    "TCH", # flake8-type-checking
+    "UP", # pyupgrade
+    "FURB", # refurb
+    "PERF", # perflint
+    "RUF", # ruff specific
+    "NPY", # NumPy specific
+]
