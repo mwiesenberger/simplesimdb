@@ -27,9 +27,6 @@ Tracker = "https://github.com/mwiesenberger/simplesimdb/issues"
 test = [
   "pytest",
 ]
-lint = [
-  "ruff",
-]
 docs = [
     "sphinx >= 5.3",
     "sphinx_autodoc_typehints >= 1.19",
@@ -39,13 +36,16 @@ docs = [
 
 [build-system]
 requires = [
-    "setuptools >= 65",
-    "setuptools_scm >= 8.0.0",
+    "hatchling",
+    "hatch-vcs",
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "hatchling.build"
 
-[tool.setuptools_scm]
-version_file = "src/simplesimdb/_version.py"
+[tool.hatch.build.targets.sdist]
+include = ["simplesimdb.py"]
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.ruff.lint]
 select = [

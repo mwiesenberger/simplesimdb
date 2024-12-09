@@ -11,7 +11,7 @@ from os import PathLike as os_PathLike
 from typing import Any, TypeAlias
 
 with suppress(PackageNotFoundError):
-    __version__ = version(__package__)
+    __version__ = version("simplesimdb")
 
 
 PathLike: TypeAlias = os_PathLike | str
@@ -158,7 +158,12 @@ class Manager:
         .. code::
 
             subprocess.run(
-                [executable, directory/hashid.json, directory/hashid0xN.filetype, directory/hashid0x(N-1).filetype],
+                [
+                    executable,
+                    directory/hashid.json,
+                    directory/hashid0xN.filetype,
+                    directory/hashid0x(N-1).filetype,
+                ],
             ...)
 
         that is it must take a third argument (the previous simulation)
@@ -715,7 +720,7 @@ class Manager:
             os.remove(entry["outputfile"])
         registry = {}
         self.set_registry(registry)
-        with suppress(OSError):
+        with suppress(OSError):  # if the directory is non-empty, nothing happens
             os.rmdir(self.__directory)
 
 
