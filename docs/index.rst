@@ -6,11 +6,16 @@
 .. include:: ../README.md
    :parser: myst_parser.sphinx_
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Reference
+API Reference
+=============
 
-   API Reference <api>
+.. autosummary::
+   :toctree: generated
+   :caption: Reference
+   :template: custom-class-template.rst
+
+   simplesimdb.Manager
+   simplesimdb.Repeater
 
 
 Indices and tables
