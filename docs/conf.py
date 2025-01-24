@@ -9,7 +9,7 @@ from importlib.metadata import version as get_version
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "simplesimdb"
-copyright = "2024, Matthias Wiesenberger"
+copyright = "2021, Technical University of Denmark"
 author = "Matthias Wiesenberger"
 
 # The full version, including alpha/beta/rc tags
