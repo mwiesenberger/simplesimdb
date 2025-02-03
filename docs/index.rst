@@ -9,14 +9,11 @@
 API Reference
 =============
 
-.. autosummary::
-   :toctree: generated
-   :caption: Reference
-   :template: custom-class-template.rst
+.. toctree::
+   :maxdepth: 2
 
-   simplesimdb.Manager
-   simplesimdb.Repeater
-
+   pages/manager
+   pages/repeater
 
 Indices and tables
 ==================

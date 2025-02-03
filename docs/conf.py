@@ -23,7 +23,6 @@ version = ".".join(release.split(".")[:2])
 extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
     "sphinx.ext.coverage",
     "sphinx.ext.intersphinx",
@@ -32,9 +31,6 @@ extensions = [
     "myst_parser",
 ]
 
-autosummary_generate = True
-
-templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # Numpy-doc config
