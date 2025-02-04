@@ -27,6 +27,12 @@ Tracker = "https://github.com/mwiesenberger/simplesimdb/issues"
 test = [
   "pytest",
 ]
+docs = [
+    "sphinx >= 5.3",
+    "sphinx_autodoc_typehints >= 1.19",
+    "sphinx-book-theme >= 0.4.0rc1",
+    "myst_parser",
+]
 
 [build-system]
 requires = [

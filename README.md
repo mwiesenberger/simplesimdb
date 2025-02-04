@@ -1,4 +1,5 @@
-# A lightweight simulation data creator and database manager
+# simplesimdb: A lightweight simulation data creator and database manager
+
 A python module for creation and management of simple simulation data.
 Essentially, a very basic database manager that creates its own data.
 
